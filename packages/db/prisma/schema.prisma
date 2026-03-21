@@ -1,0 +1,54 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+model User{
+  id Int @id @default(autoincrement())
+  email String @unique
+  password String @unique
+  name String 
+  publicKey String?
+  number String @unique
+  OnRampTransaction OnRampTransaction[]
+  OffRampTransaction OffRampTransaction[]
+  Balance Balance[]
+  sentTransfers p2pTransfer[]
+  receivedTransfers p2pTransfer[] @relation()
+  conversations ConversationParticipant[] @relation()
+  sentMessages Message[]
+}
+model Merchant{
+  id Int @id @default(autoincrement())
+  name String
+  email String @unique
+  MerchantBalance MerchantBalance?
+  authType AuthType
+  QRCode QRCode[]
+  OffRampTransaction OffRampTransaction[]
+}
+model MerchantBalance{
+  id Int @id @default(autoincrement())
+  merchantId Int @unique
+  amount Int
+  locked Int
+  merchant Merchant @relation(fields:[merchantId],references:[id])
+}
+model QRCode{
+  id Int @id @default(autoincrement())
+  merchantId Int
+  amount Int?
+  label String?
+  code String @unique
+  createdAt DateTime @default(now())
+  merchant Merchant @relation(fields:[merchantId],references:[id])
+  
+}
