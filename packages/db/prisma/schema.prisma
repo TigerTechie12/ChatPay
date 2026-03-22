@@ -11,6 +11,7 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
 model User{
   id Int @id @default(autoincrement())
   email String @unique
@@ -31,7 +32,7 @@ model Merchant{
   name String
   email String @unique
   MerchantBalance MerchantBalance?
-  authType AuthType
+  authType authType
   QRCode QRCode[]
   OffRampTransaction OffRampTransaction[]
 }
@@ -50,5 +51,50 @@ model QRCode{
   code String @unique
   createdAt DateTime @default(now())
   merchant Merchant @relation(fields:[merchantId],references:[id])
-  
+
+}
+model Balance{
+  id Int @id @default(autoincrement())
+  userId Int @unique
+  amount Int
+  locked Int
+  user User @relation(fields:[userId],references:[id])
+}
+model OnRampTransaction{
+  id Int @id @default(autoincrement())
+  status OnRampStatus
+  token String @unique
+  provider String
+  amount Int
+  startedAt DateTime @default(now())
+  userId Int
+  user User @relation(fields:[userId],references: [id])
+@@index([userId,startTime])
+@@index([status])
+}
+model OffRampTransaction{
+  id Int @default(autoincrement())
+  status OffRampStatus
+  amount Int
+  provider String
+  accountNumber String
+  ifscCode String
+  startedAt DateTime @default(now())
+  completedAt DateTime?
+  retryCount Int @default(0)
+  maxRetries Int @default(5)
+  lastError String?
+  userId Int?
+  merchantId Int?
+  user User? @relation(fields:[userId],references:[id])
+  merchant Merchant? @relation(fields:[merchantId],references:[id])
+ @@index([status, retryCount])   
+  @@index([userId, startTime])   
+  @@index([merchantId, startTime]) 
+
+}
+
+enum authType{
+Google
+Github
 }
