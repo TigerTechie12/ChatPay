@@ -22,9 +22,9 @@ model User{
   OnRampTransaction OnRampTransaction[]
   OffRampTransaction OffRampTransaction[]
   Balance Balance[]
-  sentTransfers p2pTransfer[]
-  receivedTransfers p2pTransfer[] @relation()
-  conversations ConversationParticipant[] @relation()
+  sentTransfers p2pTransfer[] @relation("SentTransfers")
+  receivedTransfers p2pTransfer[] @relation("ReceivedTransfers")
+  conversations ConversationParticipant[] 
   sentMessages Message[]
 }
 model Merchant{
@@ -69,11 +69,10 @@ model OnRampTransaction{
   startedAt DateTime @default(now())
   userId Int
   user User @relation(fields:[userId],references: [id])
-@@index([userId,startTime])
-@@index([status])
+
 }
 model OffRampTransaction{
-  id Int @default(autoincrement())
+  id Int @id @default(autoincrement())
   status OffRampStatus
   amount Int
   provider String
@@ -88,12 +87,57 @@ model OffRampTransaction{
   merchantId Int?
   user User? @relation(fields:[userId],references:[id])
   merchant Merchant? @relation(fields:[merchantId],references:[id])
- @@index([status, retryCount])   
-  @@index([userId, startTime])   
-  @@index([merchantId, startTime]) 
+
 
 }
+model p2pTransfer{
+  id Int @id @default(autoincrement())
+  amount Int
+  timestamp DateTime @default(now())
+  senderId Int
+  receiverId Int
+  sender   User @relation(name: "SentTransfers",     fields: [senderId],   references: [id])
+  receiver User @relation(name: "ReceivedTransfers", fields: [receiverId], references: [id])
+  
+}
+model Conversation{
+  id Int @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  participants ConversationParticipant[]
+  messages Message[]
+}
+model ConversationParticipant{
+  id Int @id @default(autoincrement())
+  conversationId Int
+ userId Int
+ publickey String
+ conversation Conversation @relation(fields:[conversationId],references:[id])
+user User @relation(fields:[userId],references:[id])
+}
+model Message{
+  id Int @id @default(autoincrement())
+  conversationId Int
+  senderId Int
+  cipherText String
+  nonce String
+  createdAt DateTime @default(now())
+  conversation Conversation @relation(fields:[conversationId],references:[id])
+  sender User @relation(fields:[senderId],references:[id])
+}
+enum OffRampStatus{
+  QUEUED
+  PROCESSING
+  SUCCESS
+  FAILED
+  RETRY
+  PENDING
 
+}
+enum OnRampStatus{
+  PENDING
+  FAILED
+COMPLETED
+}
 enum authType{
 Google
 Github
