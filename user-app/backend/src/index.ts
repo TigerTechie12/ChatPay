@@ -1,11 +1,14 @@
 import express from 'express';
 import cors from 'cors';
-import bodyParser from 'body-parser';
-import { PrismaClient } from '@prisma/client';
-import {UserSchema} from '../../../packages/common/src/index'
 import jwt from 'jsonwebtoken'
 const app=express()
-const prisma = new PrismaClient();
+import {router} from './routes/auth'
 
+const port=3000
 app.use(cors());
-app.use(bodyParser.json());
+app.use(express.json());
+app.use("/api/v1",router)
+
+app.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
+})

@@ -1,18 +1,17 @@
 import express from 'express';
 import cors from 'cors';
 import bodyParser from 'body-parser';
+import { Router } from 'express';
 import { PrismaClient } from '@prisma/client';
 import {UserSchema} from '../../../packages/common/src/index'
 import jwt from 'jsonwebtoken'
-const app=express()
+export const router=Router()
 const prisma = new PrismaClient();
 
-app.use(cors());
-app.use(bodyParser.json());
+
 const JWT_SECRET=process.env.JWT_SECRET || ""
 
-
-app.post('/signup',async(req,res)=>{
+router.post('/signup',async(req,res)=>{
   const name=req.body.name
   const email=req.body.email
   const password=req.body.password
@@ -34,21 +33,22 @@ app.post('/signup',async(req,res)=>{
             number:number
         }
     })
-const token=jwt.sign({name:name,password:password,email:email},JWT_SECRET)
-res.status(200).json({message:"User created",token:token})
+
+res.status(200).json({message:"User created"})
 }
   catch(e){message:"Error creating user"}  
 })
-app.post('/signin',async(req,res)=>{
+router.post('/signin',async(req,res)=>{
 const email=req.body.email
 const password=req.body.password
 const name=req.body.name
-try{ const user=await prisma.user.findUnique({
+try{ const user:any=await prisma.user.findUnique({
     id:{email:email,name:name}
 })
 if(!user){return res.json({message:"User not found"})}
+const userId=user.id
 
-const token=jwt.sign({name:name,password:password,email:email},JWT_SECRET)
+const token=jwt.sign({name:name,password:password,email:email,userId},JWT_SECRET)
 res.status(200).json({message:"User created",token:token})
 
 }
