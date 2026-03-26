@@ -1,4 +1,5 @@
 import express from 'express'
+import { PrismaClient } from '@prisma/client';
 // This is your test secret API key.
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY || '');
 // Replace this endpoint secret with your endpoint's unique secret
@@ -8,8 +9,9 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY || '');
 const endpointSecret = process.env.STRIPE_ENDPOINT_SECRET || '';
 
 const app = express();
+const prisma = new PrismaClient();
 
-app.post('/webhook', express.raw({type: 'application/json'}), (request, response) => {
+app.post('/webhook', express.raw({type: 'application/json'}), async(request, response) => {
   {let event = request.body;
   // Only verify the event if you have an endpoint secret defined.
   // Otherwise use the basic event deserialized with JSON.parse
@@ -22,7 +24,7 @@ app.post('/webhook', express.raw({type: 'application/json'}), (request, response
         signature,
         endpointSecret
       );
-   
+   const txn=await 
     
     
     } catch (err:any) {
@@ -33,11 +35,23 @@ app.post('/webhook', express.raw({type: 'application/json'}), (request, response
   }
  if(event.type==="checkout.session.completed"){
         const session=event.data.object
-const token=event.metadata?.token
+const token=session.metadata?.token
+const amount=session.amount_total
+const id=await prisma.onRampTransaction.findUnique({where:{token:token}})
+    const db=await prisma.$transaction([
+        prisma.balance.update({
+ where:{id:id.userId},
+ data:{amount:amount}
+        }),
+prisma.onRampTransaction.update({where:{token:token},
+data:{status:'COMPLETED'}})
+
+    ])
+
 
     }
 
-    
+
 }})
 
   app.listen(4242, () => console.log('Running on port 4242'));
