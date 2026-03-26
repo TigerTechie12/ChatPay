@@ -46,3 +46,17 @@ userRouter.post('/onramp', authMiddleware, async (req, res) => {
 })
 
 
+userRouter.get('/balance',authMiddleware,async(req,res)=>{
+const headers=req.headers.authorization
+const jwtToken=headers!.split(' ')[1]
+const decode=jwt.decode(jwtToken || '') as {userId:number} | null
+const id=decode?.userId
+try{const balance=await prisma.balance.findUnique({where:{id:id}})
+if(balance){
+    return res.status(200).json({message:"Your Balance is :",balance:balance.amount})
+}}
+catch(e){
+    return res.status(500).json({message:"Error fetching balance"})
+}
+
+})
