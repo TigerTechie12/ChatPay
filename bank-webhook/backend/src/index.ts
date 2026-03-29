@@ -38,7 +38,7 @@ app.post('/webhook', express.raw({type: 'application/json'}), async(request, res
 const token=session.metadata?.token
 const amount=session.amount_total
 const id=await prisma.onRampTransaction.findUnique({where:{token:token}})
-    const db=await prisma.$transaction([
+    const [balanceUpdate,onRampTransaction]=await prisma.$transaction([
         prisma.balance.update({
  where:{id:id.userId},
  data:{amount:amount}

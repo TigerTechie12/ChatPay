@@ -6,3 +6,8 @@ export const UserSchema=zod.object({
     password:zod.string(),
     number:zod.string()
 })
+
+export const OnRampSchema=zod.object({
+    amount:zod.number(),
+    provider:zod.enum(["STRIPE"])
+})
