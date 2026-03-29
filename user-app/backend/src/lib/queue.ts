@@ -1,3 +1,5 @@
 import {Queue} from 'bullmq';
+import IORedis from 'ioredis';
+const redisConnection = new IORedis()
 
-export const queue=new Queue('transactionQueue')
+export const withdrawalQueue=new Queue('withdrawalQueue')

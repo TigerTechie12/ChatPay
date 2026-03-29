@@ -3,7 +3,7 @@ import { Router } from "express";
 import { PrismaClient } from "@prisma/client";
 import jwt from "jsonwebtoken";
 import { authMiddleware } from "../middleware/middleware";
-import {queue} from '../lib/queue'
+import {withdrawalQueue} from '../lib/queue'
 
 const prisma = new PrismaClient();
 export const offRampRouter = Router();
@@ -37,8 +37,8 @@ const offRampTxn=await txn.offRampTransaction.create({data:{
 
 }}) 
 
-await queue.add('offRampTxn',{offRampTxnId:offRampTxn.id})
-
+await withdrawalQueue.add('offRampTxn',{offRampTxnId:offRampTxn.id},{removeOnComplete:true,removeOnFail:{age:24*3600}})
+await withdrawalQueue.setGlobalRateLimit(1,1000)
 res.json({message:'Withdrawal Request Queued',
 id:offRampTxn.id
 })
