@@ -2,10 +2,10 @@ import express from "express";
 import { Router } from "express";
 import { PrismaClient } from "@prisma/client";
 import { authMiddleware } from "../middleware/middleware";
-const userPayRouter=Router()
+const walletPayRouter=Router()
 const prisma=new PrismaClient()
 
-userPayRouter.post('/pay',authMiddleware,async(req,res)=>{
+walletPayRouter.post('/payAtWallet',authMiddleware,async(req,res)=>{
     const {phoneNumber,amount}=req.body
     //@ts-ignore
     const userId=req.userId
@@ -27,7 +27,10 @@ const recipentCurrentBalance=await txn.balance.update({where:{number:phoneNumber
 )
 return res.status(200).json({message:"Payment Successful to the Recipents wallet",})
 
-}}
+}
+return res.status(404).json({message:"Recipent's wallet not found with the given phone number,try here:"})
+
+}
 
 
 
