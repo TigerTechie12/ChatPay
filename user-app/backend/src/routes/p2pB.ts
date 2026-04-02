@@ -2,7 +2,7 @@ import express from 'express'
 import { Router } from 'express'
 import { PrismaClient } from '@prisma/client'
 import { authMiddleware } from '../middleware/middleware'
-import { p2pwithdrawalQueue } from '../lib/queue'
+import { withdrawalQueue } from '../lib/queue'
 const p2pBRouter=Router()
 const prisma=new PrismaClient()
 
@@ -11,6 +11,7 @@ const {amount,provider,accountNumber,ifscCode}=req.body
 const amountInPaise=amount*100
 //@ts-ignore
 const userId=req.userId
+try{
 const userBalance = await prisma.balance.findUnique({where:{userId:userId}})
 const availableBalance=userBalance.amount-userBalance.locked
 if(amountInPaise>availableBalance){return res.status(400).json({message:"Insufficient Balance to pay"})}
@@ -29,12 +30,13 @@ const offRampTxn=await txn.offRampTransaction.create({data:{
     startedAt:new Date()
 }})
 const offRampId=offRampTxn.id
-await p2pwithdrawalQueue.add('p2pOffRampTxn',{offRampId:offRampId},{removeOnComplete:true,removeOnFail:{age:24*3600}})
-await p2pwithdrawalQueue.setGlobalRateLimit(1,1000)
+await withdrawalQueue.add('p2pOffRampTxn',{offRampId:offRampId},{removeOnComplete:true,removeOnFail:{age:24*3600}})
+await withdrawalQueue.setGlobalRateLimit(1,1000)
 return res.status(200).json({message:"Bank Payment Initiated",offRampId:offRampId}) 
 
 
-})
+})}
+catch(e:any){return res.status(400).json({message:e.message})}
 
 
 })
