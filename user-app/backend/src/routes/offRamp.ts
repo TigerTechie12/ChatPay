@@ -37,7 +37,7 @@ const offRampTxn=await txn.offRampTransaction.create({data:{
 
 }}) 
 
-await withdrawalQueue.add('offRampTxn',{offRampTxnId:offRampTxn.id},{removeOnComplete:true,removeOnFail:{age:24*3600}})
+await withdrawalQueue.add('offRampTxn',{offRampTxnId:offRampTxn.id},{removeOnComplete:true,removeOnFail:{age:24*3600},attempts:5,backoff:{type:'fixed',delay:10000}},)
 await withdrawalQueue.setGlobalRateLimit(1,1000)
 res.json({message:'Withdrawal Request Queued',
 id:offRampTxn.id
