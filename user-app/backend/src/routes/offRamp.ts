@@ -4,14 +4,16 @@ import { PrismaClient } from "@prisma/client";
 import jwt from "jsonwebtoken";
 import { authMiddleware } from "../middleware/middleware";
 import {withdrawalQueue} from '../lib/queue'
-
+import IORedis from "ioredis";
+const redis=new IORedis()
 const prisma = new PrismaClient();
 export const offRampRouter = Router();
 offRampRouter.use(express.json());
 offRampRouter.post("/offramp", authMiddleware, async(req, res) => {
 const {amount, provider,accountNumber,ifscCode}=req.body
-//@ts-ignore
+
 const userId:any=req.userId 
+const cacheKey=`profile:${userId}`
 try{
 const offRampOperation=await prisma.$transaction(async(txn:any)=>{
     await txn.$queryRaw`SELECT * FROM "Balance" WHERE "userId"=${userId} FOR UPDATE `
@@ -25,7 +27,7 @@ if(availableBalance<amount*100){ throw new Error('Insufficient Balance')}
 
 
 const updateDB=await txn.balance.update({where:{userId:userId},data:{locked:{increment:amount*100}}})
-
+await redis.del(cacheKey)
 const offRampTxn=await txn.offRampTransaction.create({data:{
     status:'QUEUED',
     amount:amount*100,

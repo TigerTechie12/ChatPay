@@ -5,12 +5,15 @@ import { authMiddleware } from '../middleware/middleware'
 import { withdrawalQueue } from '../lib/queue'
 const p2pBRouter=Router()
 const prisma=new PrismaClient()
-
+import IORedis from 'ioredis'
+const redis=new IORedis()
 p2pBRouter.post('/payAtBank',authMiddleware,async(req,res)=>{
 const {amount,provider,accountNumber,ifscCode}=req.body
 const amountInPaise=amount*100
-//@ts-ignore
+
 const userId=req.userId
+const cacheKey=`profile:${userId}`
+
 try{
 const userBalance = await prisma.balance.findUnique({where:{userId:userId}})
 const availableBalance=userBalance.amount-userBalance.locked
@@ -20,6 +23,7 @@ await prisma.$transaction(async(txn:any)=>{
     await txn.$queryRaw`SELECT * FROM "Balance" WHERE "userId"=${userId} FOR UPDATE `
 
 const lockedAmount=await txn.balance.update({where:{userId:userId},data:{locked:{increment:amountInPaise}}})
+await redis.del(cacheKey)
 const offRampTxn=await txn.offRampTransaction.create({data:{
     amount:amountInPaise,
     provider:provider,

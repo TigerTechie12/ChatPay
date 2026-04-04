@@ -3,16 +3,21 @@ const JWT_SECRET=process.env.JWT_SECRET || ""
 import  type { Request,Response,NextFunction } from 'express'
 
 
-export function authMiddleware(req:Request,res:Response,next:NextFunction){
+export function authMiddleware(req:Request,res:Response,next:NextFunction):void{
 const headers=req.headers.authorization
 if(!headers || !headers.startsWith("Bearer")){
-    return res.json({message:"Unauthorized"})
+    res.json({message:"Unauthorized"})
+    return
 }
-const token:any=headers.split(' ')[1]
-const ifUser=jwt.verify(token,JWT_SECRET) as {userId:string}
-if(ifUser){
-  req.userId=ifUser.userId 
-    return next()
+const token=headers.split(' ')[1]
+if(!token){
+    res.status(401).json({message:"Unauthorized"})
+    return
 }
-else{    return res.status(401).json({message:"Unauthorized"})
+try{
+    const ifUser=jwt.verify(token,JWT_SECRET) as {userId:string}
+    req.userId=ifUser.userId
+    next()
+}catch{
+    res.status(401).json({message:"Unauthorized"})
 }}

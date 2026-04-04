@@ -4,10 +4,11 @@ import { PrismaClient } from "@prisma/client";
 import { authMiddleware } from "../middleware/middleware";
 const walletPayRouter=Router()
 const prisma=new PrismaClient()
-
+import IORedis from "ioredis"
+const redis=new IORedis()
 walletPayRouter.post('/payAtWallet',authMiddleware,async(req,res)=>{
     const {phoneNumber,amount}=req.body
-    //@ts-ignore
+    
     const userId=req.userId
     const amountInPaise=amount*100
    try{
@@ -23,8 +24,8 @@ const wallet2wallettxn=await prisma.$transaction(async(txn:any)=>{
 const userCurrentBalance=await txn.balance.update({where:{userId:userId},data:{amount:{decrement:{amountInPaise}}}})
 const recipentCurrentBalance=await txn.balance.update({where:{number:phoneNumber},data:{amount:{increment:{amountInPaise}}}})
 
-}
-)
+})
+await redis.del(`profile:${userId}`)
 return res.status(200).json({message:"Payment Successful to the Recipents wallet",})
 
 }

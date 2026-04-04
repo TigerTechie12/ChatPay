@@ -59,14 +59,23 @@ catch(e){
     return res.json({message:"Error signing in user"})
 }})
 
-router.get('/api/balance',authMiddleware,async(req,res)=>{
+router.get('/api/balance',authMiddleware,async(req:any,res:any)=>{
 const userId=req.userId
 const cacheKey=`profile:${userId}`
 
-const cachedBalance=await redis.get(cacheKey)
+try{const cachedBalance=await redis.get(cacheKey)
 if(cachedBalance){
     return res.json({balance:cachedBalance,source:'cache'})
 }
-try{}
-catch(e){}
+const dbData=await prisma.balance.findUnique({where:{userId:userId}})
+const balance=dbData.amount
+if(balance){
+const data=await redis.set(cacheKey,JSON.stringify(balance), 'EX', 30)
+
+return res.status(200).json({balance:balance})
+}
+
+}
+
+catch(e){return res.status(500).json({message:"Error fetching balance"})}
 })
