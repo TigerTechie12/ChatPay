@@ -7,7 +7,8 @@ const prisma = new PrismaClient();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '');
 export const userRouter = Router();
 import { authMiddleware } from '../middleware/middleware';
-
+import IORedis from 'ioredis';
+const redis = new IORedis()
 userRouter.post('/onramp', authMiddleware, async (req, res) => {
     const { provider, amount } = req.body;
     const token = JSON.stringify(Math.floor(Math.random() * 1000000) + "xacdcdcddq" + Math.floor(Math.random() * 1000000) + "wertyuio");
@@ -45,3 +46,23 @@ userRouter.post('/onramp', authMiddleware, async (req, res) => {
     return res.status(200).json({ message: "Onramp transaction created", data: dbData, token: token, url: session.url });
 })
 
+userRouter.get('/api/balance',authMiddleware,async(req:any,res:any)=>{
+const userId=req.userId
+const cacheKey=`profile:${userId}`
+
+try{const cachedBalance=await redis.get(cacheKey)
+if(cachedBalance){
+    return res.json({balance:cachedBalance,source:'cache'})
+}
+const dbData=await prisma.balance.findUnique({where:{userId:userId}})
+const balance=dbData.amount
+if(balance){
+const data=await redis.set(cacheKey,JSON.stringify(balance), 'EX', 30)
+
+return res.status(200).json({balance:balance})
+}
+
+}
+
+catch(e){return res.status(500).json({message:"Error fetching balance"})}
+})

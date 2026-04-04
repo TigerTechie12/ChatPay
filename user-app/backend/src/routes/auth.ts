@@ -49,8 +49,9 @@ try{ const user:any=await prisma.user.findUnique({
 })
 if(!user){return res.json({message:"User not found"})}
 const userId=user.id
-
-const token=jwt.sign({name:name,password:password,email:email,userId},JWT_SECRET)
+const now=new Date()
+const minutes=now.getMinutes()
+const token=jwt.sign({name:name,password:password,email:email,userId,time:minutes, exp: Math.floor(Date.now() / 1000) + (60 * 60)},JWT_SECRET)
 res.status(200).json({message:"User created",token:token})
 
 }
@@ -59,23 +60,13 @@ catch(e){
     return res.json({message:"Error signing in user"})
 }})
 
-router.get('/api/balance',authMiddleware,async(req:any,res:any)=>{
-const userId=req.userId
-const cacheKey=`profile:${userId}`
-
-try{const cachedBalance=await redis.get(cacheKey)
-if(cachedBalance){
-    return res.json({balance:cachedBalance,source:'cache'})
+router.post('/signout',authMiddleware,async(req,res)=>{
+ const userId=req.userId
+    const now=new Date()
+const timeNow=now.getMinutes()
+const time:number | undefined=req.time
+const expiredTime=req.exp
+if(timeNow-time!<expiredTime!){
+await redis.set(`blacklist:${req.userId}`, 'true', 'EX', expiredTime! - (timeNow - time!))
 }
-const dbData=await prisma.balance.findUnique({where:{userId:userId}})
-const balance=dbData.amount
-if(balance){
-const data=await redis.set(cacheKey,JSON.stringify(balance), 'EX', 30)
-
-return res.status(200).json({balance:balance})
-}
-
-}
-
-catch(e){return res.status(500).json({message:"Error fetching balance"})}
 })
