@@ -129,8 +129,7 @@ enum OffRampStatus{
   PROCESSING
   SUCCESS
   FAILED
-  RETRY
-  PENDING
+  RETRYPENDING
 
 }
 enum OnRampStatus{
