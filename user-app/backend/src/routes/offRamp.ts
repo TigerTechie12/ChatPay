@@ -2,7 +2,7 @@ import express from "express";
 import { Router } from "express";
 import { PrismaClient } from "@prisma/client";
 import jwt from "jsonwebtoken";
-import { authMiddleware } from "../middleware/middleware";
+import { authMiddleware } from "../../../../packages/middleware/src/middleware";
 import {withdrawalQueue} from '../lib/queue'
 import IORedis from "ioredis";
 const redis=new IORedis()

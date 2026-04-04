@@ -8,7 +8,7 @@ import jwt from 'jsonwebtoken'
 export const router=Router()
 const prisma = new PrismaClient();
 import IORedis from 'ioredis';
-import { authMiddleware } from '../middleware/middleware';
+import { authMiddleware } from '../../../../packages/middleware/src/middleware';
 
 const JWT_SECRET=process.env.JWT_SECRET || ""
 const redis = new IORedis()

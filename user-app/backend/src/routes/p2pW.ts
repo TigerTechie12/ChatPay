@@ -1,7 +1,7 @@
 import express from "express";
 import { Router } from "express";
 import { PrismaClient } from "@prisma/client";
-import { authMiddleware } from "../middleware/middleware";
+import { authMiddleware } from "../../../../packages/middleware/src/middleware";
 const walletPayRouter=Router()
 const prisma=new PrismaClient()
 import IORedis from "ioredis"

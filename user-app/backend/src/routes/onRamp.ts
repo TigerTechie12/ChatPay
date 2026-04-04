@@ -6,7 +6,7 @@ import Stripe from 'stripe';
 const prisma = new PrismaClient();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '');
 export const userRouter = Router();
-import { authMiddleware } from '../middleware/middleware';
+import { authMiddleware } from '../../../../packages/middleware/src/middleware';
 import IORedis from 'ioredis';
 const redis = new IORedis()
 userRouter.post('/onramp', authMiddleware, async (req, res) => {
