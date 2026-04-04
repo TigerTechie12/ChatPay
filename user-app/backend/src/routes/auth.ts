@@ -7,9 +7,11 @@ import {UserSchema} from '../../../packages/common/src/index'
 import jwt from 'jsonwebtoken'
 export const router=Router()
 const prisma = new PrismaClient();
-
+import IORedis from 'ioredis';
+import { authMiddleware } from '../middleware/middleware';
 
 const JWT_SECRET=process.env.JWT_SECRET || ""
+const redis = new IORedis()
 
 router.post('/signup',async(req,res)=>{
   const name=req.body.name
@@ -56,3 +58,15 @@ res.status(200).json({message:"User created",token:token})
 catch(e){
     return res.json({message:"Error signing in user"})
 }})
+
+router.get('/api/balance',authMiddleware,async(req,res)=>{
+const userId=req.userId
+const cacheKey=`profile:${userId}`
+
+const cachedBalance=await redis.get(cacheKey)
+if(cachedBalance){
+    return res.json({balance:cachedBalance,source:'cache'})
+}
+try{}
+catch(e){}
+})

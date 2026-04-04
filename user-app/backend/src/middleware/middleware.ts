@@ -9,8 +9,9 @@ if(!headers || !headers.startsWith("Bearer")){
     return res.json({message:"Unauthorized"})
 }
 const token:any=headers.split(' ')[1]
-const ifUser=jwt.verify(token,JWT_SECRET)
+const ifUser=jwt.verify(token,JWT_SECRET) as {userId:string}
 if(ifUser){
+  req.userId=ifUser.userId 
     return next()
 }
 else{    return res.status(401).json({message:"Unauthorized"})
