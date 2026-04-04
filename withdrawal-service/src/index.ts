@@ -15,11 +15,8 @@ const jobId=job.id
     id:jobId
  }})
  
-if(offRampTxn.status === 'SUCCESS'){
-return 
 
-} 
-const response=await axios.post('',{currency:'INR',
+const response=await axios.post('https://api.razorpay.com/v1/payouts',{currency:'INR',
     mode:'IMPS',
     purpose:'payout',
     amount:offRampTxn.amount,
