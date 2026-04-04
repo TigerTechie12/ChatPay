@@ -47,3 +47,29 @@ throw new Error('OffRamp Transaction Failed,Marked for Retry')
 
 })
 worker.run()
+worker.on('completed',(job:Job,returnvalue:any)=>{
+    console.log(`Job ${job.id} completed successfully!`);
+})
+
+worker.on('progress',(job:Job,progress:any)=>{
+console.log(`Job ${job.id} is ${progress}% complete.`);
+})
+
+worker.on('failed',async(job: Job | undefined, error: Error, prev: string)=>{
+if(job?.attemptsMade ==job?.opts.attempts!){console.log(`Job ${job.id} has completely exhausted all retries!`);
+}
+const dbData=await prisma.offRamp.findUnique({where:{id:job?.id}})
+const userId=dbData?.userId
+await prisma.$transaction(async(txn:any)=>{
+    await prisma.balance.update({where:{userId:userId},
+data:{locked:{decrement:{amount:dbData?.amount!}}}})
+    })
+
+    await prisma.offRamp.update({where:{id:job?.id},data:{status:'FAILED',completedAt:new Date()}})
+})
+ 
+
+worker.on('error', err => {
+  
+  console.error(err);
+});
