@@ -25,6 +25,7 @@ model User{
   sentTransfers p2pTransfer[] @relation("SentTransfers")
   receivedTransfers p2pTransfer[] @relation("ReceivedTransfers")
   conversations ConversationParticipant[] 
+  merchantPayments MerchantPayment[]
   sentMessages Message[]
 }
 model Merchant{
@@ -35,6 +36,7 @@ model Merchant{
   authType authType
   QRCode QRCode[]
   OffRampTransaction OffRampTransaction[]
+  merchantPayments MerchantPayment[]
 }
 model MerchantBalance{
   id Int @id @default(autoincrement())
@@ -42,6 +44,15 @@ model MerchantBalance{
   amount Int
   locked Int
   merchant Merchant @relation(fields:[merchantId],references:[id])
+}
+model MerchantPayment{
+  id Int @id @default(autoincrement())
+  amount Int
+  merchantId Int
+  userId Int
+  timestamp DateTime @default(now())
+    merchant  Merchant @relation(fields:[merchantId],references:[id])
+  user User @relation(fields:[userId],references:[id])
 }
 model QRCode{
   id Int @id @default(autoincrement())
