@@ -41,8 +41,8 @@ model Merchant{
 model MerchantBalance{
   id Int @id @default(autoincrement())
   merchantId Int @unique
-  amount Int
-  locked Int
+  amount Int @default(0)
+  locked Int @default(0)
   merchant Merchant @relation(fields:[merchantId],references:[id])
 }
 model MerchantPayment{
