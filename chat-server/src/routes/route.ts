@@ -52,5 +52,16 @@ return res.status(200).json({message:"Messages fetched successfully",messages:me
     }
     catch(e:any){return res.status(400).json({message:e.message})}
 })
-chatRouter.get('/api/users/:userId/publickey',async(req,res)=>{})
+chatRouter.get('/api/users/:userId/publickey',async(req,res)=>{
+const userId=req.params.userId
+try{
+    const checkUser=await prisma.user.findUnique({where:{id:userId}})
+    if(!checkUser){return res.status(404).json({message:"User not found"})}
+const publicKeyQuery=await prisma.conversationParticipant.findUnique({where:{userId:userId}})
+if(!publicKeyQuery){return res.status(404).json({message:"Public key not found for the user"})}
+const publicKey=publicKeyQuery.data.publickey
+return res.status(200).json({message:"Public key fetched successfully",userId:userId,publicKey:publicKey})
+}
+catch(e:any){res.status(400).json({message:e.message})}
+})
 
