@@ -35,3 +35,4 @@ const qrList=await prisma.QRcode.findMany({where:{merchantId:req.userId},select:
   })  
 return res.status(200).json({message:"QR codes fetched successfully",qrList:formattedQrList})
 })
+
