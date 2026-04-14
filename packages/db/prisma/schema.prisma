@@ -33,6 +33,9 @@ model Merchant{
   name String
   email String @unique
   MerchantBalance MerchantBalance?
+  bankAccountNumber String?
+  bankIfscCode       String?
+  bankAccountName    String?
   authType authType
   QRCode QRCode[]
   OffRampTransaction OffRampTransaction[]

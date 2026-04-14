@@ -1,6 +1,9 @@
 import WebSocket,{WebSocketServer} from 'ws'
+import {prismaClient} from '@chatpay/prisma-client'
+const prisma=prismaClient()
 
 const wss=new WebSocket('')
+
 interface User{
     socket:WebSocket,
     room:string
@@ -16,7 +19,7 @@ socket.on('message',(message:any)=>{
     if(parsedMessage.type==='join'){allSockets.push({socket:socket,room:parsedMessage.payload.room})}
 
 
-    
+
     console.log('Received message:', message)
 
 

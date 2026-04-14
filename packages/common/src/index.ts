@@ -25,3 +25,23 @@ amount:zod.number().positive(),
 ifscCode:zod.string()
 
 })
+export const conversationParticipantSchema=zod.object({
+    userId:zod.number(),
+    publicKey:zod.string()
+})
+
+export const authMerchantSchema=zod.object({
+    code:zod.string()
+})
+
+export const generateQRSchema=zod.object({
+    amount:zod.number().positive(),
+    label:zod.string().optional(),
+merchantId:zod.number()
+})
+
+export const merchantPaymentSchema=zod.object({
+    amount:zod.number().positive(),
+    merchantId:zod.number(),
+    label:zod.string().optional()
+})
