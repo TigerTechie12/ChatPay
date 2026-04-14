@@ -19,6 +19,7 @@ dashboardRouter.get('/api/merchant/transactions',async(req,res)=>{
     const transactions=await prisma.merchantPayment.findMany({where:{merchantId},select:{userId:true,amount:true,timestamp:true}})
 
 const merchantPayments=transactions.map((t:any)=>{t.userId,t.amount,t.timestamp})
+
 return res.status(200).json({merchantPayments})
 })
 
