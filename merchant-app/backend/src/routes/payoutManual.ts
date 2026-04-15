@@ -13,7 +13,7 @@ payOutRouter.post('/api/merchant/manual/withdraw',async(req,res)=>{
     const merchantId=req.userId
 try{
 await prisma.$transaction(async(txn:any)=>{
-    await txn.$queryRaw`SELECT * FROM "MerchantBalance" WHERE "userId"=${merchantId} FOR UPDATE `
+    await txn.$queryRaw`SELECT * FROM "MerchantBalance" WHERE "merchantId"=${merchantId} FOR UPDATE `
 const balance=await prisma.merchantBalance.findUnique({where:merchantId})
 const lockedBalance=balance.locked
 const amountInDb=balance.amount
