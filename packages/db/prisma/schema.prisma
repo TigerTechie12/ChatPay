@@ -78,7 +78,6 @@ model OnRampTransaction{
   id Int @id @default(autoincrement())
   status OnRampStatus
   token String @unique
-  provider String
   amount Int
   startedAt DateTime @default(now())
   userId Int
@@ -89,7 +88,6 @@ model OffRampTransaction{
   id Int @id @default(autoincrement())
   status OffRampStatus
   amount Int
-  provider String
   accountNumber String
   ifscCode String
   startedAt DateTime @default(now())
