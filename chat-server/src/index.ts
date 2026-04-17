@@ -1,30 +1,20 @@
 import WebSocket,{WebSocketServer} from 'ws'
 import {prismaClient} from '@chatpay/prisma-client'
+import http from 'http'
 const prisma=prismaClient()
-
-const wss=new WebSocket('')
-
-interface User{
-    socket:WebSocket,
-    room:string
+import express from 'express'
+const app=express()
+const wss=new WebSocketServer({noServer:true})
+const server=http.createServer(app)
+import url from 'url'
+server.on('upgrade',(req,socket,head)=>{
+const {query}=url.parse(req.url as string,true)
+const token=query.token 
+if(!token){
+     socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n')
+    socket.destroy()
+    return
 }
-let allSockets:User[]=[]
-wss.on('connection',(socket)=>{
-    socket.on('error',(err:any)=>{
-        console.error('WebSocket error:', err);
-    })
-
-socket.on('message',(message:any)=>{
-    const parsedMessage=JSON.parse(message)
-    if(parsedMessage.type==='join'){allSockets.push({socket:socket,room:parsedMessage.payload.room})}
-
-
-
-    console.log('Received message:', message)
-
-
-})
-socket.send('Hello from WebSocket server!')
 
 
 })
