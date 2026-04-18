@@ -10,7 +10,7 @@ import { authMiddleware } from '../../../../packages/middleware/src/middleware';
 import IORedis from 'ioredis';
 const redis = new IORedis()
 userRouter.post('/onramp', authMiddleware, async (req, res) => {
-    const { provider, amount } = req.body;
+    const { amount } = req.body;
     const token = JSON.stringify(Math.floor(Math.random() * 1000000) + "xacdcdcddq" + Math.floor(Math.random() * 1000000) + "wertyuio");
 
     const headers = req.headers.authorization;
@@ -20,7 +20,7 @@ userRouter.post('/onramp', authMiddleware, async (req, res) => {
 
     const dbData = await prisma.onRampTransaction.create({
         data: {
-            provider: provider,
+        
             amount: amount * 100,
             token: token,
             status: "PROCESSING",

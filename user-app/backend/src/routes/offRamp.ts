@@ -10,7 +10,7 @@ const prisma = new PrismaClient();
 export const offRampRouter = Router();
 offRampRouter.use(express.json());
 offRampRouter.post("/offramp", authMiddleware, async(req, res) => {
-const {amount, provider,accountNumber,ifscCode}=req.body
+const {amount,accountNumber,ifscCode}=req.body
 
 const userId:any=req.userId 
 const cacheKey=`profile:${userId}`
@@ -31,7 +31,6 @@ await redis.del(cacheKey)
 const offRampTxn=await txn.offRampTransaction.create({data:{
     status:'QUEUED',
     amount:amount*100,
-    provider:provider,
     userId:userId,
     accountNumber:accountNumber,
     ifscCode:ifscCode,

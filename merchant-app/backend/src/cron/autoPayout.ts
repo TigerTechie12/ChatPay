@@ -7,6 +7,7 @@ import cron from 'node-cron'
 import { merchantWithdrawalQueue } from '../lib/queue';
 
 cron.schedule("0 2 */2 * *",async()=>{
+    const merchantIds=await prisma.
 redis.set(key,value,'EX',3600,'NX')
 try{const merchantBalance=await prisma.merchantBalance.findUnique({where:{merchantId:merchantId}})
 if(merchantBalance.balance==0){return}
