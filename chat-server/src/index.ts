@@ -38,6 +38,7 @@ wss.on('connection',(socket,req)=>{
 const userId=(socket as any).userId
 socket.on('message',async(rawMessage:any)=>{
     const data=JSON.parse(rawMessage)
+    const channel=`chat:messages`
 const checkConversationParticipant=await prisma.conversationParticipant.findUnique(
     {where:{conversationId:data.conversationId,userId:data.userId},
 include:{user:true}})
@@ -49,6 +50,7 @@ ciphertext:data.ciphertext,
 nonce:data.nonce,
 createdAt:Date.now()
 }})
+redis.publish(channel,JSON.stringify(saveData))
 for(let i=0; i<checkConversationParticipant.user.length; i++){
 
 if(checkConversationParticipant.user[i].id !==data.senderId ){
