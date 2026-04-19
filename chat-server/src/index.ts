@@ -7,9 +7,11 @@ const app=express()
 const wss=new WebSocketServer({noServer:true})
 const server=http.createServer(app)
 import url from 'url'
+import IOredis from 'ioredis'
 import jwt from 'jsonwebtoken'
 const JWT_SECRET=process.env.JWT_SECRET as string
 const activeConnections=new Map()
+const redis=new IOredis()
 server.on('upgrade',(req,socket,head)=>{
 const {query}=url.parse(req.url as string,true)
 const token=query.token as string
@@ -21,7 +23,7 @@ if(!token){
 try{const decode=jwt.verify(token,JWT_SECRET) as jwt.JwtPayload
     const userId=decode.userId 
 wss.handleUpgrade(req,socket as any,head as any,(socket)=>{
-    ;(socket as any).userId=userId
+    (socket as any).userId=userId
     activeConnections.set(userId, socket)
     socket.on('close',()=>{activeConnections.delete(userId)})
 wss.emit('connection',socket,req)
