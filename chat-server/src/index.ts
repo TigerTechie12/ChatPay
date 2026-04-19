@@ -18,9 +18,10 @@ if(!token){
     socket.destroy()
     return
 }
-try{const decode=jwt.verify(token,JWT_SECRET)
+try{const decode=jwt.verify(token,JWT_SECRET) as jwt.JwtPayload
     const userId=decode.userId 
 wss.handleUpgrade(req,socket as any,head as any,(socket)=>{
+    ;(socket as any).userId=userId
     activeConnections.set(userId, socket)
     socket.on('close',()=>{activeConnections.delete(userId)})
 wss.emit('connection',socket,req)
@@ -32,6 +33,7 @@ wss.emit('connection',socket,req)
 })
 
 wss.on('connection',(socket,req)=>{
+const userId=(socket as any).userId
 socket.on('message',async(rawMessage:any)=>{
     const data=JSON.parse(rawMessage)
 const checkConversationParticipant=await prisma.conversationParticipant.findUnique(
@@ -51,11 +53,22 @@ if(checkConversationParticipant.user[i].id !==data.senderId ){
  const receiverId=checkConversationParticipant.user[i]
 
     const activeMembersSocket=activeConnections.get(receiverId)
-activeMembersSocket.send(JSON.stringify(data))
+activeMembersSocket.send(JSON.stringify(saveData))
+if(data.type ==='TYPING'){
+const pushPayload={
+    type:"USER_TYPING",
+    conversationId:data.conversationId,
+    typerId:userId
+}
+activeMembersSocket.send(JSON.stringify(pushPayload))
+}
+
 }
 }
 })
-
+socket.on("close",()=>{
+    activeConnections.delete(userId) 
+})
 
 })
 
