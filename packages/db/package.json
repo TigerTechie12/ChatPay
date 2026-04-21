@@ -1,4 +1,9 @@
 {
+  "name": "chatpay-db",
+  "version": "2.025.0",
+  "description": "",
+  "main": "index.js",
+  "license": "ISC",
   "devDependencies": {
     "@types/node": "^25.5.0",
     "dotenv": "^17.3.1",

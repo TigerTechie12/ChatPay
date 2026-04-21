@@ -1,6 +1,6 @@
 {
-  "name": "common",
-  "version": "1.0.0",
+  "name": "shreyash-chatpay-common",
+  "version": "2.01.0",
   "description": "",
   "main": "index.js",
   "scripts": {

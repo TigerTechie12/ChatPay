@@ -1,6 +1,6 @@
 {
-  "name": "middleware",
-  "version": "1.0.0",
+  "name": "chatpay-middleware",
+  "version": "2.02.02",
   "description": "",
   "main": "index.js",
   "scripts": {
