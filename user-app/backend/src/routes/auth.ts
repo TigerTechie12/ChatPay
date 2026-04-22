@@ -2,13 +2,13 @@ import express from 'express';
 import cors from 'cors';
 import bodyParser from 'body-parser';
 import { Router } from 'express';
-import { PrismaClient } from '@prisma/client';
-import {UserSchema} from '../../../packages/common/src/index'
+import { PrismaClient } from 'chatpay-db';
+import {UserSchema} from 'shreyash-chatpay-common'
 import jwt from 'jsonwebtoken'
 export const router=Router()
 const prisma = new PrismaClient();
 import IORedis from 'ioredis';
-import { authMiddleware } from '../../../../packages/middleware/src/middleware';
+import { authMiddleware } from 'chatpay-middleware';
 
 const JWT_SECRET=process.env.JWT_SECRET || ""
 const redis = new IORedis()

@@ -1,8 +1,9 @@
 {
   "name": "chatpay-middleware",
-  "version": "2.02.02",
+  "version": "2.02.03",
   "description": "",
-  "main": "index.js",
+  "main": "dist/middleware.js",
+  "types": "dist/middleware.d.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build":"tsc -b"
