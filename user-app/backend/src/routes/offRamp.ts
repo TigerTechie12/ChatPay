@@ -1,12 +1,13 @@
 import express from "express";
 import { Router } from "express";
-import { PrismaClient } from "@prisma/client";
-import jwt from "jsonwebtoken";
-import { authMiddleware } from "../../../../packages/middleware/src/middleware";
+import { PrismaClient } from 'chatpay-db';
+import {PrismaPg} from '@prisma/adapter-pg'
+const adapter=new PrismaPg({connectionString:process.env.DATABASE_URL})
+const prisma = new PrismaClient({adapter});
+import { authMiddleware } from "chatpay-middleware";
 import {withdrawalQueue} from '../lib/queue'
 import IORedis from "ioredis";
 const redis=new IORedis()
-const prisma = new PrismaClient();
 export const offRampRouter = Router();
 offRampRouter.use(express.json());
 offRampRouter.post("/offramp", authMiddleware, async(req, res) => {

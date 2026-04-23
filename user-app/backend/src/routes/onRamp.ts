@@ -1,12 +1,15 @@
-import { PrismaClient } from '@prisma/client';
+
 import jwt from 'jsonwebtoken';
 import { Router } from 'express';
 import Stripe from 'stripe';
 
-const prisma = new PrismaClient();
+import { PrismaClient } from 'chatpay-db';
+import {PrismaPg} from '@prisma/adapter-pg'
+const adapter=new PrismaPg({connectionString:process.env.DATABASE_URL})
+const prisma = new PrismaClient({adapter});
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '');
 export const userRouter = Router();
-import { authMiddleware } from '../../../../packages/middleware/src/middleware';
+import { authMiddleware } from 'chatpay-middleware';
 import IORedis from 'ioredis';
 const redis = new IORedis()
 userRouter.post('/onramp', authMiddleware, async (req, res) => {
@@ -17,14 +20,15 @@ userRouter.post('/onramp', authMiddleware, async (req, res) => {
     const jwtToken = headers!.split(' ')[1];
     const decode = jwt.decode(jwtToken || '') as { userId: number } | null;
     const id = decode?.userId;
-
+    
     const dbData = await prisma.onRampTransaction.create({
         data: {
-        
+            startedAt:new Date(),     
             amount: amount * 100,
             token: token,
-            status: "PROCESSING",
+            status: "PENDING",
             userId: id
+                        
         }
     });
 

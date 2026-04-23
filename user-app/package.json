@@ -1,5 +1,9 @@
 {
   "devDependencies": {
     "@types/jsonwebtoken": "^9.0.10"
+  },
+  "dependencies": {
+    "@shreyash_iitr/common": "^1.0.0",
+    "chatpay-db": "^2.25.0"
   }
 }

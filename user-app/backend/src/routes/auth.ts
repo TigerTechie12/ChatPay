@@ -3,10 +3,12 @@ import cors from 'cors';
 import bodyParser from 'body-parser';
 import { Router } from 'express';
 import { PrismaClient } from 'chatpay-db';
+import {PrismaPg} from '@prisma/adapter-pg'
 import {UserSchema} from 'shreyash-chatpay-common'
 import jwt from 'jsonwebtoken'
 export const router=Router()
-const prisma = new PrismaClient();
+const adapter=new PrismaPg({connectionString:process.env.DATABASE_URL})
+const prisma = new PrismaClient({adapter});
 import IORedis from 'ioredis';
 import { authMiddleware } from 'chatpay-middleware';
 
@@ -45,7 +47,7 @@ const email=req.body.email
 const password=req.body.password
 const name=req.body.name
 try{ const user:any=await prisma.user.findUnique({
-    id:{email:email,name:name}
+    where:{email:email,name:name}
 })
 if(!user){return res.json({message:"User not found"})}
 const userId=user.id

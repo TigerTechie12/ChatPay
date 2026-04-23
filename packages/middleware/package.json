@@ -1,6 +1,6 @@
 {
   "name": "chatpay-middleware",
-  "version": "2.02.03",
+  "version": "2.2.31",
   "description": "",
   "main": "dist/middleware.js",
   "types": "dist/middleware.d.ts",
