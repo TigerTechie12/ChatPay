@@ -21,24 +21,31 @@ const allMerchants=await prisma.merchant.findMany({where:{
 }
 })
 
+const filteredMerchants=allMerchants.filter((m:any)=>{const hasPending = m.offRampTransaction.some((mb: any) => {
+    return mb.status === 'QUEUED' || mb.status === 'RETRYPENDING' || mb.status === 'PROCESSING'
+  })
+    return m.merchantBalance.amount !==0 && !hasPending
+})
 
-for(let i=0; i<allMerchants.length; i++){
+for(let i=0; i<filteredMerchants.length; i++){
+
+try{
 let offRampTransaction:any
-    await prisma.$transaction(async(txn:any)=>{
-    
-    const merchantId=allMerchants[i].merchantBalance.id
+await prisma.$transaction(async(txn:any)=>{
+
+    const merchantId=filteredMerchants[i].id
+
     await txn.$queryRaw`SELECT * FROM "MerchantBalance" WHERE "merchantId"=${merchantId} FOR UPDATE `
-    
+
     const merchantDetails= await txn.merchantBalance.findUnique({where:{merchantId:merchantId}})
-    if(merchantDetails.amount ===0){return}
-    const increment=merchantDetails.amount                                             
-        const bankAccountName=allMerchants[i].bankAccountName
-        const bankAccountNumber=allMerchants[i].bankAccountNumber
-        const bankIfscCode=allMerchants[i].bankIfscCode
+    const increment=merchantDetails.amount
+        const bankAccountName=filteredMerchants[i].bankAccountName
+        const bankAccountNumber=filteredMerchants[i].bankAccountNumber
+        const bankIfscCode=filteredMerchants[i].bankIfscCode
 await txn.merchantBalance.update({where:{merchantId:merchantId},data:{
     locked:{increment:increment}
 }})
-const offRampTransaction=await txn.offRampTransaction.create({
+offRampTransaction=await txn.offRampTransaction.create({
 data:{
     amount:increment,
 accountNumber:bankAccountNumber,
@@ -52,6 +59,8 @@ status:'QUEUED'
 })
 
 await merchantWithdrawalQueue.add('offRampTxn',{offRampTxnId:offRampTransaction.id},{removeOnComplete:true,removeOnFail:{age:24*3600},attempts:5,backoff:{type:'fixed',delay:10000}},)
+
+}catch(e){console.log(`Payout failed for merchant ${filteredMerchants[i].id}:`,e);continue}
 
 }
 
