@@ -21,6 +21,8 @@ export function AppSidebar() {
   return (
     <Sidebar>
 <SidebarHeader>
+    <div className="font-bold">ChatPay</div>
+    
     <SidebarMenu>
       <SidebarMenuItem>
         <DropdownMenu>
