@@ -1,11 +1,9 @@
-import {Worker,Job} from 'bullmq';
-import IORedis from 'ioredis';
-import {PrismaClient} from '@prisma/client';
-
-import axios from 'axios';
+import {Worker,Job} from 'bullmq'
+import IORedis from 'ioredis'
+import {PrismaClient} from '@prisma/client'
+import axios from 'axios'
 
 const redisConnection = new IORedis()
-
 const prisma=new PrismaClient()
 
 const worker=new Worker('merchantWithdrawalQueue',async(job:Job)=>{
@@ -14,7 +12,6 @@ const jobId=job.id
     const offRampTxn=await prisma.offRampTransaction.findUnique({where:{
     id:jobId
  }})
- 
 
 const response=await axios.post('https://api.razorpay.com/v1/payouts',{currency:'INR',
     mode:'IMPS',
@@ -64,9 +61,7 @@ data:{locked:{decrement:{amount:dbData?.amount!}}}})
 
     await prisma.offRampTransaction.update({where:{id:job?.id},data:{status:'FAILED',completedAt:new Date()}})
 })
- 
 
 worker.on('error', err => {
-  
   console.error(err)
 })

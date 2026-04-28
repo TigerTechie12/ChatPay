@@ -1,10 +1,10 @@
 import express from 'express'
-import IOredis from 'ioredis'
-import { PrismaClient } from '@prisma/client';
-import { Router } from 'express';
-const prisma=PrismaClient()
-const redis=new IOredis()
-import { merchantWithdrawalQueue } from '../lib/queue';
+import IORedis from 'ioredis'
+import { PrismaClient } from '@prisma/client'
+import { Router } from 'express'
+const prisma=new PrismaClient()
+const redis=new IORedis()
+import { merchantWithdrawalQueue } from '../lib/queue'
 const payOutRouter=Router()
 
 payOutRouter.post('/api/merchant/manual/withdraw',async(req,res)=>{
@@ -13,7 +13,7 @@ payOutRouter.post('/api/merchant/manual/withdraw',async(req,res)=>{
     const merchantId=req.userId
 try{
 await prisma.$transaction(async(txn:any)=>{
-    await txn.$queryRaw`SELECT * FROM "MerchantBalance" WHERE "merchantId"=${merchantId} FOR UPDATE `
+    await txn.$queryRaw`SELECT * FROM "MerchantBalance" WHERE "merchantId"=${merchantId} FOR UPDATE`
 const balance=await prisma.merchantBalance.findUnique({where:merchantId})
 const lockedBalance=balance.locked
 const amountInDb=balance.amount
@@ -31,13 +31,12 @@ const offRampTxn=await prisma.offRampTransaction.create({data:{
     status:'QUEUED'
 }})
 
-
-await merchantWithdrawalQueue.add('offRampTxn',{offRampTxnId:offRampTxn.id},{removeOnComplete:true,removeOnFail:{age:24*3600},attempts:5,backoff:{type:'fixed',delay:10000}},)
+await merchantWithdrawalQueue.add('offRampTxn',{offRampTxnId:offRampTxn.id},{removeOnComplete:true,removeOnFail:{age:24*3600},attempts:5,backoff:{type:'fixed',delay:10000}})
 await merchantWithdrawalQueue.setGlobalRateLimit(1,1000)
 res.json({message:'Withdrawal Request Queued',
 id:offRampTxn.id
 })
 })
 }
-catch(e){res.status(400).json({message:"SOmething went wrong"})}
+catch(e){res.status(400).json({message:"Something went wrong"})}
 })

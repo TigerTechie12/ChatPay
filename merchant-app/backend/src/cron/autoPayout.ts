@@ -1,20 +1,18 @@
 import express from 'express'
-import IOredis from 'ioredis'
-import { PrismaClient } from '@prisma/client';
+import IORedis from 'ioredis'
+import { PrismaClient } from '@prisma/client'
 const prisma=new PrismaClient()
-const redis=new IOredis()
+const redis=new IORedis()
 import cron from 'node-cron'
-import { merchantWithdrawalQueue } from '../lib/queue';
+import { merchantWithdrawalQueue } from '../lib/queue'
 
 cron.schedule("0 2 */2 * *",async()=>{
 try{const redisLock=await redis.set("payout-lock","running","EX",3600,"NX")
 if(redisLock===null){return}
 const allMerchants=await prisma.merchant.findMany({where:{
-    
     bankAccountNumber:{not:null},
     bankIfscCode:{not:null},
     bankAccountName:{not:null}
-    
 },include:{
     merchantBalance:true,
     offRampTransaction:true
@@ -35,7 +33,7 @@ await prisma.$transaction(async(txn:any)=>{
 
     const merchantId=filteredMerchants[i].id
 
-    await txn.$queryRaw`SELECT * FROM "MerchantBalance" WHERE "merchantId"=${merchantId} FOR UPDATE `
+    await txn.$queryRaw`SELECT * FROM "MerchantBalance" WHERE "merchantId"=${merchantId} FOR UPDATE`
 
     const merchantDetails= await txn.merchantBalance.findUnique({where:{merchantId:merchantId}})
     const increment=merchantDetails.amount
@@ -58,7 +56,7 @@ status:'QUEUED'
 
 })
 
-await merchantWithdrawalQueue.add('offRampTxn',{offRampTxnId:offRampTransaction.id},{removeOnComplete:true,removeOnFail:{age:24*3600},attempts:5,backoff:{type:'fixed',delay:10000}},)
+await merchantWithdrawalQueue.add('offRampTxn',{offRampTxnId:offRampTransaction.id},{removeOnComplete:true,removeOnFail:{age:24*3600},attempts:5,backoff:{type:'fixed',delay:10000}})
 
 }catch(e){console.log(`Payout failed for merchant ${filteredMerchants[i].id}:`,e);continue}
 

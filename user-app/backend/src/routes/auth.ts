@@ -1,16 +1,13 @@
-import express from 'express';
-import cors from 'cors';
-import bodyParser from 'body-parser';
-import { Router } from 'express';
-import { PrismaClient } from 'chatpay-db';
+import { Router } from 'express'
+import { PrismaClient } from 'chatpay-db'
 import {PrismaPg} from '@prisma/adapter-pg'
 import {UserSchema} from 'shreyash-chatpay-common'
 import jwt from 'jsonwebtoken'
 export const router=Router()
 const adapter=new PrismaPg({connectionString:process.env.DATABASE_URL})
-const prisma = new PrismaClient({adapter});
-import IORedis from 'ioredis';
-import { authMiddleware } from 'chatpay-middleware';
+const prisma = new PrismaClient({adapter})
+import IORedis from 'ioredis'
+import { authMiddleware } from 'chatpay-middleware'
 
 const JWT_SECRET=process.env.JWT_SECRET || ""
 const redis = new IORedis()
@@ -40,7 +37,7 @@ router.post('/signup',async(req,res)=>{
 
 res.status(200).json({message:"User created"})
 }
-  catch(e){message:"Error creating user"}  
+  catch(e){message:"Error creating user"}
 })
 router.post('/signin',async(req,res)=>{
 const email=req.body.email

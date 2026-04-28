@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken'
 const JWT_SECRET=process.env.JWT_SECRET || ""
-import  type { Request,Response,NextFunction } from 'express'
+import type { Request,Response,NextFunction } from 'express'
 import IORedis from 'ioredis'
 const redis=new IORedis()
 

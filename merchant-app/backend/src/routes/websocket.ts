@@ -3,7 +3,7 @@ import http from 'http'
 import {WebSocketServer} from 'ws'
 import jwt from 'jsonwebtoken'
 import url from 'url'
-import IOredis from 'ioredis'
+import IORedis from 'ioredis'
 const JWT_SECRET=process.env.JWT_SECRET as string
 const wss=new WebSocketServer({noServer:true})
 
@@ -34,16 +34,15 @@ return
 
 })
 
-
 wss.on('connection',(socket,req:any)=>{
-socket.on('error',(error:any)=>{console.log('Webosocket error:',error)})
+socket.on('error',(error:any)=>{console.log('Websocket error:',error)})
 const merchantId=req.merchantId
 const channel=`channel-${merchantId}`
-const subscriber=new IOredis()
+const subscriber=new IORedis()
 
 subscriber.subscribe(channel, (err, count) => {
   if (err) {
-    console.error("Failed to subscribe: %s", err.message);
+    console.error("Failed to subscribe: %s", err.message)
   } else {
     console.log(`Subscribed successfully! This client is currently subscribed to ${count} channels.`)
   }
@@ -60,11 +59,8 @@ socket.on('close',()=>{
   subscriber.quit()
 })
 
-
-
 })
 const PORT = process.env.PORT || 8080
 server.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`)
 })
-

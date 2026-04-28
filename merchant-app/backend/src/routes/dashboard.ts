@@ -1,7 +1,7 @@
 import express from 'express'
-import { Router } from 'express';
-import { PrismaClient } from '@prisma/client';
-import { authMiddleware } from '../../../../packages/middleware/src/middleware';
+import { Router } from 'express'
+import { PrismaClient } from '@prisma/client'
+import { authMiddleware } from '../../../../packages/middleware/src/middleware'
 const dashboardRouter=Router()
 const prisma=new PrismaClient()
 dashboardRouter.use(express.json())
@@ -16,11 +16,21 @@ return res.status(200).json({availableBalance:availableBalnce,totalBalance:merch
 
 dashboardRouter.get('/api/merchant/transactions',async(req,res)=>{
     const merchantId=req.userId
-    const transactions=await prisma.merchantPayment.findMany({where:{merchantId},select:{userId:true,amount:true,timestamp:true}})
-
-const merchantPayments=transactions.map((t:any)=>{t.userId,t.amount,t.timestamp})
-
+    const transactions=await prisma.merchantPayment.findMany({
+      where:{merchantId},
+      select:{id:true,userId:true,amount:true,timestamp:true,user:{select:{name:true}}},
+      orderBy:{timestamp:'desc'}
+    })
+const merchantPayments=transactions.map((t:any)=>({id:t.id,userId:t.userId,userName:t.user?.name??null,amount:t.amount,timestamp:t.timestamp}))
 return res.status(200).json({merchantPayments})
 })
 
-dashboardRouter.get('/api/merchant/payouts',async(req,res)=>{})
+dashboardRouter.get('/api/merchant/payouts',async(req,res)=>{
+  const merchantId=req.userId
+  const payouts=await prisma.offRampTransaction.findMany({
+    where:{merchantId},
+    select:{id:true,amount:true,status:true,accountNumber:true,ifscCode:true,startedAt:true,completedAt:true},
+    orderBy:{startedAt:'desc'}
+  })
+  return res.status(200).json({payouts})
+})

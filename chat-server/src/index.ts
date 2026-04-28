@@ -1,79 +1,85 @@
-import WebSocket,{WebSocketServer} from 'ws'
-import {prismaClient} from '@chatpay/prisma-client'
+import WebSocket, { WebSocketServer } from 'ws'
+import { prismaClient } from '@chatpay/prisma-client'
 import http from 'http'
-const prisma=prismaClient()
+const prisma = prismaClient()
 import express from 'express'
-const app=express()
-const wss=new WebSocketServer({noServer:true})
-const server=http.createServer(app)
+const app = express()
+const wss = new WebSocketServer({ noServer: true })
+const server = http.createServer(app)
 import url from 'url'
-import IOredis from 'ioredis'
+import IORedis from 'ioredis'
 import jwt from 'jsonwebtoken'
-const JWT_SECRET=process.env.JWT_SECRET as string
-const activeConnections=new Map()
-const redis=new IOredis()
-server.on('upgrade',(req,socket,head)=>{
-const {query}=url.parse(req.url as string,true)
-const token=query.token as string
-if(!token){
-     socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n')
+const JWT_SECRET = process.env.JWT_SECRET as string
+const activeConnections = new Map()
+const redis = new IORedis()
+
+server.on('upgrade', (req, socket, head) => {
+  const { query } = url.parse(req.url as string, true)
+  const token = query.token as string
+  if (!token) {
+    socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n')
     socket.destroy()
     return
-}
-try{const decode=jwt.verify(token,JWT_SECRET) as jwt.JwtPayload
-    const userId=decode.userId 
-wss.handleUpgrade(req,socket as any,head as any,(socket)=>{
-    (socket as any).userId=userId
-    activeConnections.set(userId, socket)
-    socket.on('close',()=>{activeConnections.delete(userId)})
-wss.emit('connection',socket,req)
-})}
- catch(e){ socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n')
+  }
+  try {
+    const decode = jwt.verify(token, JWT_SECRET) as jwt.JwtPayload
+    const userId = decode.userId
+    wss.handleUpgrade(req, socket as any, head as any, (ws) => {
+      ;(ws as any).userId = userId
+      activeConnections.set(userId, ws)
+      ws.on('close', () => { activeConnections.delete(userId) })
+      wss.emit('connection', ws, req)
+    })
+  } catch (e) {
+    socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n')
     socket.destroy()
-    return}
-
+  }
 })
 
-wss.on('connection',(socket,req)=>{
-const userId=(socket as any).userId
-socket.on('message',async(rawMessage:any)=>{
-    const data=JSON.parse(rawMessage)
-    const channel=`chat:messages`
-const checkConversationParticipant=await prisma.conversationParticipant.findUnique(
-    {where:{conversationId:data.conversationId,userId:data.userId},
-include:{user:true}})
-if(!checkConversationParticipant){return}
-const saveData=await prisma.message.create({data:{
-conversationId:data.conversationId,
-senderId:data.senderId,
-ciphertext:data.ciphertext,
-nonce:data.nonce,
-createdAt:Date.now()
-}})
-redis.publish(channel,JSON.stringify(saveData))
-for(let i=0; i<checkConversationParticipant.user.length; i++){
+wss.on('connection', (socket) => {
+  const userId = (socket as any).userId
+  socket.on('message', async (rawMessage: any) => {
+    const data = JSON.parse(rawMessage)
+    const conversationId = Number(data.conversationId)
 
-if(checkConversationParticipant.user[i].id !==data.senderId ){
- const receiverId=checkConversationParticipant.user[i]
+    // TYPING: forward to other participants, do not persist
+    if (data.type === 'TYPING') {
+      const participants = await prisma.conversationParticipant.findMany({ where: { conversationId } })
+      for (const p of participants) {
+        if (p.userId !== userId) {
+          const ws = activeConnections.get(p.userId)
+          if (ws) ws.send(JSON.stringify({ type: 'USER_TYPING', conversationId, typerId: userId }))
+        }
+      }
+      return
+    }
 
-    const activeMembersSocket=activeConnections.get(receiverId)
-activeMembersSocket.send(JSON.stringify(saveData))
-if(data.type ==='TYPING'){
-const pushPayload={
-    type:"USER_TYPING",
-    conversationId:data.conversationId,
-    typerId:userId
-}
-activeMembersSocket.send(JSON.stringify(pushPayload))
-}
+    const participants = await prisma.conversationParticipant.findMany({ where: { conversationId } })
+    const isMember = participants.some((p: any) => p.userId === userId)
+    if (!isMember) return
 
-}
-}
+    const savedMessage = await prisma.message.create({
+      data: {
+        conversationId,
+        senderId: userId,
+        cipherText: data.cipherText,
+        nonce: data.nonce,
+        createdAt: new Date()
+      }
+    })
+
+    redis.publish('chat:messages', JSON.stringify(savedMessage))
+
+    for (const p of participants) {
+      if (p.userId !== userId) {
+        const ws = activeConnections.get(p.userId)
+        if (ws) ws.send(JSON.stringify(savedMessage))
+      }
+    }
+  })
+
+  socket.on('close', () => { activeConnections.delete(userId) })
 })
-socket.on("close",()=>{
-    activeConnections.delete(userId) 
-})
 
-})
-
-
+const PORT = process.env.PORT ? Number(process.env.PORT) : 3003
+server.listen(PORT, () => console.log(`Chat server listening on port ${PORT}`))

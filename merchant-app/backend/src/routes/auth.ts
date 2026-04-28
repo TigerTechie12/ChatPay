@@ -1,6 +1,5 @@
-import express from 'express'
-import { Router } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { Router } from 'express'
+import { PrismaClient } from '@prisma/client'
 const authRouter=Router()
 const prisma=new PrismaClient()
 import jwt from 'jsonwebtoken'
@@ -41,16 +40,13 @@ const newMerchant=await prisma.merchant.create({data:{
     authType:'GOOGLE'
 }})
 
-
 const token=jwt.sign({email:email,name:name,userId:newMerchant.id,time:Date.now(),exp:Math.floor(Date.now()/1000)+(60*60)},process.env.JWT_SECRET!)
-res.status(200).json({token:token,merchantId:newMerchant.id,name:name,email:email})   
+res.status(200).json({token:token,merchantId:newMerchant.id,name:name,email:email})
 
 }
    catch(error){
     console.error('Error during Google authentication:', error)
    return res.status(500).json({ error: 'Internal server error' })
-   } 
-
-
+   }
 
 })

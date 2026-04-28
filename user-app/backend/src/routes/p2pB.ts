@@ -20,7 +20,7 @@ const availableBalance=userBalance.amount-userBalance.locked
 if(amountInPaise>availableBalance){return res.status(400).json({message:"Insufficient Balance to pay"})}
 await prisma.$transaction(async(txn:any)=>{
 
-    await txn.$queryRaw`SELECT * FROM "Balance" WHERE "userId"=${userId} FOR UPDATE `
+    await txn.$queryRaw`SELECT * FROM "Balance" WHERE "userId"=${userId} FOR UPDATE`
 
 const lockedAmount=await txn.balance.update({where:{userId:userId},data:{locked:{increment:amountInPaise}}})
 await redis.del(cacheKey)
@@ -36,11 +36,9 @@ const offRampTxn=await txn.offRampTransaction.create({data:{
 const offRampId=offRampTxn.id
 await withdrawalQueue.add('p2pOffRampTxn',{offRampId:offRampId},{removeOnComplete:true,removeOnFail:{age:24*3600}})
 await withdrawalQueue.setGlobalRateLimit(1,1000)
-return res.status(200).json({message:"Bank Payment Initiated",offRampId:offRampId}) 
-
+return res.status(200).json({message:"Bank Payment Initiated",offRampId:offRampId})
 
 })}
 catch(e:any){return res.status(400).json({message:e.message})}
-
 
 })
