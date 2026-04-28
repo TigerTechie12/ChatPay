@@ -14,7 +14,7 @@ const [conversationId,setConversationId]=useState(null)
 const [otherUserId,setOtherUserId]=useState(null)
 const [messages,setMessages]=useState([])
 const [conLoading,setConLoading]=useState(true)
-const [msgloading,setMsgLoading]=useState(false)
+const [msgLoading,setMsgLoading]=useState(false)
 const keyPairRef=useRef<{publicKey: Uint8Array, privateKey: Uint8Array} | null>(null)
 
 useEffect(()=>{
@@ -33,7 +33,39 @@ catch(e){console.log("Failed to fetch conversations")}
 }
 fetchConversations()
 },[])
-
+useEffect(()=>{
+async function fetchMessages(){
+if(!conversationId || !keyPairRef.current) return
+try{
+setMsgLoading(true)
+const token = localStorage.getItem("token")
+const res=await axios.get(`${CHAT_API}/api/users/${otherUserId}/publickey`,{
+headers:{Authorization:`Bearer ${token}`}
+})
+const otherUserPublicKey=res.data.publicKey
+const messagesRes=await axios.get(`${CHAT_API}/api/messages/${conversationId}`,{
+headers:{Authorization:`Bearer ${token}`}
+})
+const messagesData=messagesRes.data
+const msgArrayToRender=messagesData.map((m:any)=>{
+const nonce=m.nonce
+const cipherText=m.cipherText
+const decrypted=decryptMessage(cipherText,nonce,keyPairRef.current!.privateKey,util.decodeBase64(otherUserPublicKey))
+const senderId=m.senderId
+const createdAt=m.createdAt
+return {
+    id:m.id,
+    senderId,
+    createdAt,
+    text:decrypted}
+})
+setMessages(msgArrayToRender)
+setMsgLoading(false)
+}catch(e){console.log("failed to load")}
+}
+fetchMessages()
+}
+,[conversationId])
 
 
 return <div>
@@ -50,7 +82,13 @@ return <div>
 })}
     </Sidebar>
 </div>
-
+{msgLoading ? <p>Loading Messages .....</p>: <div>
+    {messages.map((m:any)=>{return <div>
+        <div>{m.userId === otherUserId ? "Them" : "Me"}</div>
+        <div>{m.text}</div>
+        <div>{new Date(m.createdAt).toLocaleString()}</div>    
+    </div>})}
+    </div>}
 </div>
 
 
