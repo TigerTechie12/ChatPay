@@ -42,7 +42,6 @@ wss.on('connection', (socket) => {
     const data = JSON.parse(rawMessage)
     const conversationId = Number(data.conversationId)
 
-    // TYPING: forward to other participants, do not persist
     if (data.type === 'TYPING') {
       const participants = await prisma.conversationParticipant.findMany({ where: { conversationId } })
       for (const p of participants) {
