@@ -16,7 +16,8 @@ const [messages,setMessages]=useState([])
 const [conLoading,setConLoading]=useState(true)
 const [msgLoading,setMsgLoading]=useState(false)
 const keyPairRef=useRef<{publicKey: Uint8Array, privateKey: Uint8Array} | null>(null)
-
+const otherUserPublicKeyRef=useRef<Uint8Array | null>(null)
+const inputRef=useRef<HTMLInputElement>(null)
 useEffect(()=>{
 async function fetchConversations(){
 try{
@@ -43,6 +44,7 @@ const res=await axios.get(`${CHAT_API}/api/users/${otherUserId}/publickey`,{
 headers:{Authorization:`Bearer ${token}`}
 })
 const otherUserPublicKey=res.data.publicKey
+otherUserPublicKeyRef.current=util.decodeBase64(otherUserPublicKey)
 const messagesRes=await axios.get(`${CHAT_API}/api/messages/${conversationId}`,{
 headers:{Authorization:`Bearer ${token}`}
 })
@@ -82,13 +84,23 @@ return <div>
 })}
     </Sidebar>
 </div>
+
 {msgLoading ? <p>Loading Messages .....</p>: <div>
     {messages.map((m:any)=>{return <div>
-        <div>{m.userId === otherUserId ? "Them" : "Me"}</div>
+        <div>{m.senderId === otherUserId ? "Them" : "Me"}</div>
         <div>{m.text}</div>
         <div>{new Date(m.createdAt).toLocaleString()}</div>    
     </div>})}
     </div>}
+{conversationId ? <input placeholder="Type your message" ref={inputRef} onKeyDown={async(e)=>{
+
+if(e.key==='Enter'){const textToGetEncrypt=inputRef?.current?.value
+if(textToGetEncrypt && keyPairRef.current && otherUserPublicKeyRef.current && conversationId){
+const encryptedText=encryptMessage(textToGetEncrypt,keyPairRef.current.privateKey,otherUserPublicKeyRef.current)
+const token = localStorage.getItem("token")
+}
+
+}}} ></input> : null}
 </div>
 
 
