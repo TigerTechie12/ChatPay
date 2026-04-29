@@ -12,12 +12,13 @@ export function Chat(){
 const [conversationList,setConversationList]=useState([])
 const [conversationId,setConversationId]=useState(null)
 const [otherUserId,setOtherUserId]=useState(null)
-const [messages,setMessages]=useState([])
+const [messages,setMessages]=useState<{id:number,senderId:string,text:string,createdAt:string}[]>([])
 const [conLoading,setConLoading]=useState(true)
 const [msgLoading,setMsgLoading]=useState(false)
 const keyPairRef=useRef<{publicKey: Uint8Array, privateKey: Uint8Array} | null>(null)
 const otherUserPublicKeyRef=useRef<Uint8Array | null>(null)
 const inputRef=useRef<HTMLInputElement>(null)
+const wsRef=useRef(null as WebSocket | null)
 useEffect(()=>{
 async function fetchConversations(){
 try{
@@ -29,6 +30,14 @@ setConversationList(res.data)
 setConLoading(false)
 const keyPairs=await getOrCreateKeyPair()
 keyPairRef.current=keyPairs
+wsRef.current=new WebSocket(`${WS_URL}?token=${token}`)
+wsRef.current.onopen=()=>{console.log("WebSocket Connected")}
+wsRef.current.onmessage=(e)=>{
+const data=JSON.parse(e.data)
+const decryptedMessage=decryptMessage(data.cipherText,data.nonce,keyPairRef.current!.privateKey,otherUserPublicKeyRef.current!)
+setMessages((prev)=>[...prev,{id:data.id,senderId:data.senderId,text:decryptedMessage ?? "",createdAt:data.createdAt}])
+}
+
 }
 catch(e){console.log("Failed to fetch conversations")}
 }
@@ -93,14 +102,10 @@ return <div>
     </div>})}
     </div>}
 {conversationId ? <input placeholder="Type your message" ref={inputRef} onKeyDown={async(e)=>{
-
-if(e.key==='Enter'){const textToGetEncrypt=inputRef?.current?.value
-if(textToGetEncrypt && keyPairRef.current && otherUserPublicKeyRef.current && conversationId){
-const encryptedText=encryptMessage(textToGetEncrypt,keyPairRef.current.privateKey,otherUserPublicKeyRef.current)
-const token = localStorage.getItem("token")
-}
-
-}}} ></input> : null}
+setMessages((prev)=>[...prev,{id:Math.random(),senderId:"me",text:inputRef.current!.value,createdAt:new Date().toISOString()}])
+const encryptedText=encryptMessage(inputRef?.current?.value ?? "",keyPairRef.current!.privateKey,otherUserPublicKeyRef.current!)
+wsRef.current?.send(JSON.stringify({encryptedText}))
+}} ></input> : null}
 </div>
 
 
