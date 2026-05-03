@@ -102,9 +102,10 @@ return <div>
     </div>})}
     </div>}
 {conversationId ? <input placeholder="Type your message" ref={inputRef} onKeyDown={async(e)=>{
+if(e.key ==="Enter"){
 setMessages((prev)=>[...prev,{id:Math.random(),senderId:"me",text:inputRef.current!.value,createdAt:new Date().toISOString()}])
 const encryptedText=encryptMessage(inputRef?.current?.value ?? "",keyPairRef.current!.privateKey,otherUserPublicKeyRef.current!)
-wsRef.current?.send(JSON.stringify({encryptedText}))
+wsRef.current?.send(JSON.stringify({encryptedText}))}
 }} ></input> : null}
 </div>
 
