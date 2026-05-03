@@ -1,5 +1,4 @@
 import nacl from 'tweetnacl'
-import util from 'tweetnacl-util'
 import { encryptMessage, decryptMessage } from './crypto'
 
 const pairA = nacl.box.keyPair()

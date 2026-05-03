@@ -2,7 +2,7 @@
 import axios from "axios"
 import { useEffect, useRef, useState } from "react"
 import util from "tweetnacl-util"
-import { getOrCreateKeyPair, encryptMessage, decryptMessage } from "./lib/crypto"
+import { getOrCreateKeyPair, encryptMessage, decryptMessage } from "@/lib/chat/crypto"
 import { Sidebar } from "lucide-react"
 
 const CHAT_API = "http://localhost:3001"
