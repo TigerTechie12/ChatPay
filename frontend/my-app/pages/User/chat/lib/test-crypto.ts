@@ -16,7 +16,7 @@ if (!decryptedBytes) {
     process.exit(1)
 }
 
-const decrypted = util.encodeUTF8(decryptedBytes)
+const decrypted = decryptedBytes
 
 if (decrypted === original) {
     console.log("PASS:", decrypted)
