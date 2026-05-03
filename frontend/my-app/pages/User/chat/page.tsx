@@ -8,6 +8,8 @@ import { Sidebar } from "lucide-react"
 const CHAT_API = "http://localhost:3001"
 const WS_URL = process.env.NEXT_PUBLIC_CHAT_WS_URL ?? "ws://localhost:3003"
 
+const avatarColors = ["bg-orange-500","bg-teal-600","bg-green-600","bg-blue-500","bg-purple-500","bg-red-500","bg-pink-500","bg-indigo-500"]
+
 export function Chat(){
 const [conversationList,setConversationList]=useState([])
 const [conversationId, setConversationId] = useState<number | null>(null)
@@ -20,6 +22,7 @@ const keyPairRef=useRef<{publicKey: Uint8Array, privateKey: Uint8Array} | null>(
 const otherUserPublicKeyRef=useRef<Uint8Array | null>(null)
 const inputRef=useRef<HTMLInputElement>(null)
 const wsRef=useRef(null as WebSocket | null)
+const messagesEndRef=useRef<HTMLDivElement>(null)
 useEffect(()=>{
 async function fetchConversations(){
 try{
@@ -39,10 +42,8 @@ if(data.conversationId ===conversationIdRef.current && data.senderId === otherUs
 const decryptedMessage=decryptMessage(data.cipherText,data.nonce,keyPairRef.current!.privateKey,otherUserPublicKeyRef.current!)
 setMessages((prev)=>[...prev,{id:data.id,senderId:data.senderId,text:decryptedMessage ?? "",createdAt:data.createdAt}])
 }}
-
 }
 catch(e){console.log("Failed to fetch conversations")}
-
 }
 fetchConversations()
 return ()=>{
@@ -83,43 +84,107 @@ fetchMessages()
 }
 ,[conversationId])
 
+useEffect(()=>{
+messagesEndRef.current?.scrollIntoView({behavior:"smooth"})
+},[messages])
 
-return <div>
-<div>
-    <Sidebar>
-{conLoading ? <p>Loading Conversations...</p> : conversationList.map((c:any)=>{
-    return <div onClick={()=>{
-        conversationIdRef.current=c.conversationId
-        setConversationId(c.conversationId)
-        otherUserId.current=c.otherUserId
-    }}>
-        <div>{c.conversationId}</div>
-        <div>{c.otherUserName}</div>
+return <div className="min-h-screen bg-[#f5f5f0] flex">
+
+  <div className="w-80 bg-white border-r border-gray-200 flex flex-col shrink-0">
+    <div className="p-6 border-b border-gray-200">
+      <h1 className="text-xl font-semibold text-gray-900 tracking-tight">Messages</h1>
     </div>
-})}
-    </Sidebar>
+    <div className="flex-1 overflow-y-auto">
+      {conLoading
+        ? <div className="flex items-center justify-center p-8 text-gray-400 text-sm">Loading conversations...</div>
+        : conversationList.map((c:any, i:number)=>{
+          return <div
+            key={c.conversationId}
+            onClick={()=>{
+              conversationIdRef.current=c.conversationId
+              setConversationId(c.conversationId)
+              otherUserId.current=c.otherUserId
+            }}
+            className={`flex items-center gap-3 p-4 cursor-pointer hover:bg-gray-50 transition-colors border-b border-gray-100 ${conversationId === c.conversationId ? "bg-green-50 border-l-4 border-l-green-500" : ""}`}
+          >
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold text-sm shrink-0 ${avatarColors[i % avatarColors.length]}`}>
+              {c.otherUserName?.charAt(0)?.toUpperCase() ?? "?"}
+            </div>
+            <div className="min-w-0">
+              <div className="font-medium text-gray-900 text-sm truncate">{c.otherUserName}</div>
+              <div className="text-xs text-gray-400">#{c.conversationId}</div>
+            </div>
+          </div>
+        })}
+    </div>
+  </div>
+
+  <div className="flex-1 flex flex-col min-w-0">
+    {!conversationId
+      ? <div className="flex-1 flex flex-col items-center justify-center text-gray-400 gap-2">
+          <div className="w-16 h-16 rounded-2xl bg-white border border-gray-200 flex items-center justify-center mb-2">
+            <Sidebar className="w-8 h-8 text-gray-300" />
+          </div>
+          <p className="text-base font-medium text-gray-500">Select a conversation to start chatting</p>
+          <p className="text-sm text-gray-400">Choose from your conversations on the left</p>
+        </div>
+      : <>
+          <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center gap-3">
+            {conversationList.map((c:any, i:number)=> c.conversationId === conversationId
+              ? <div key={c.conversationId} className="flex items-center gap-3">
+                  <div className={`w-9 h-9 rounded-full flex items-center justify-center text-white font-semibold text-sm shrink-0 ${avatarColors[i % avatarColors.length]}`}>
+                    {c.otherUserName?.charAt(0)?.toUpperCase() ?? "?"}
+                  </div>
+                  <div>
+                    <div className="font-semibold text-gray-900 text-sm">{c.otherUserName}</div>
+                    <div className="text-xs text-green-500 font-medium">Connected</div>
+                  </div>
+                </div>
+              : null
+            )}
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-3">
+            {msgLoading
+              ? <div className="flex items-center justify-center py-8 text-gray-400 text-sm">Loading messages...</div>
+              : messages.map((m:any)=>{
+                const isMe = m.senderId !== otherUserId.current
+                return <div key={m.id} className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}>
+                  <div className={`max-w-xs lg:max-w-md px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${isMe ? "bg-green-600 text-white rounded-br-sm" : "bg-white border border-gray-200 text-gray-900 rounded-bl-sm"}`}>
+                    {m.text}
+                  </div>
+                  <div className="text-xs text-gray-400 mt-1 px-1">
+                    {new Date(m.createdAt).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}
+                  </div>
+                </div>
+              })}
+            <div ref={messagesEndRef} />
+          </div>
+
+          <div className="bg-white border-t border-gray-200 p-4">
+            <div className="flex items-center gap-3 border border-gray-200 rounded-xl px-4 py-3 focus-within:border-gray-400 transition-colors bg-white">
+              <input
+                placeholder="Type a message..."
+                ref={inputRef}
+                onKeyDown={async(e)=>{
+                  if(e.key ==="Enter"){
+                    setMessages((prev)=>[...prev,{id:Math.random(),senderId:"me",text:inputRef.current!.value,createdAt:new Date().toISOString()}])
+                    const encryptedText=encryptMessage(inputRef?.current?.value ?? "",keyPairRef.current!.privateKey,otherUserPublicKeyRef.current!)
+                    wsRef.current?.send(JSON.stringify({type: "message",
+                      conversationId: conversationId,
+                      cipherText: encryptedText.cipherText,
+                      nonce: encryptedText.nonce}))
+                    inputRef.current!.value=""
+                  }
+                }}
+                className="flex-1 text-sm text-gray-900 outline-none bg-transparent placeholder:text-gray-400"
+              />
+              <span className="text-xs text-gray-400 select-none">↵ Enter</span>
+            </div>
+          </div>
+        </>
+    }
+  </div>
+
 </div>
-{conversationId ? <p>Select a conversation to start chatting</p> : null}
-{msgLoading ? <p>Loading Messages .....</p>: <div>
-    {messages.map((m:any)=>{return <div>
-        <div>{m.senderId === otherUserId.current ? "Them" : "Me"}</div>
-        <div>{m.text}</div>
-        <div>{new Date(m.createdAt).toLocaleString()}</div>    
-    </div>})}
-    </div>}
-{conversationId ? <input placeholder="Type your message" ref={inputRef} onKeyDown={async(e)=>{
-if(e.key ==="Enter"){
-setMessages((prev)=>[...prev,{id:Math.random(),senderId:"me",text:inputRef.current!.value,createdAt:new Date().toISOString()}])
-const encryptedText=encryptMessage(inputRef?.current?.value ?? "",keyPairRef.current!.privateKey,otherUserPublicKeyRef.current!)
-wsRef.current?.send(JSON.stringify({type: "message",
-    conversationId: conversationId,
-    cipherText: encryptedText.cipherText,
-    nonce: encryptedText.nonce}))
-inputRef.current!.value=""
-}
-}} ></input> : null}
-</div>
-
-
-
 }
