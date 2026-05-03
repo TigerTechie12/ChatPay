@@ -4,6 +4,8 @@ import React, { useState, useRef } from 'react'
 import { Delete, Send } from 'lucide-react'
 import axios from 'axios'
 
+const USER_API = "http://localhost:3000"
+
 const PaymentKeypad = () => {
   const [amount, setAmount] = useState('0')
   const [note, setNote] = useState('')
@@ -95,11 +97,13 @@ const PaymentKeypad = () => {
       <div className='font-bold'> Recipent</div>
       <input type="text" placeholder='Pay To A Phone Number' ref={inputRef}
         onKeyDown={async (event) => {
-          const number = inputRef.current?.value
+          const phoneNumber = inputRef.current?.value
           if (event.key === 'Enter') {
-            await axios.post('', {
-              number
-            })
+            const token = localStorage.getItem("token")
+            await axios.post(`${USER_API}/api/v1/payAtWallet`, {
+              phoneNumber,
+              amount: parseFloat(amount)
+            }, { headers: { Authorization: `Bearer ${token}` } })
           }
         }}
       />
