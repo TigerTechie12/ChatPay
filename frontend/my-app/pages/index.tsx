@@ -263,7 +263,7 @@ export default function AuthPage() {
         </div>
 
         <p className="text-center text-xs text-gray-400 mt-6">
-          ChatPay · End-to-end encrypted payments
+          ChatPay · A Payment Gateway With E2E Encrypted Chat 
         </p>
       </div>
     </div>
