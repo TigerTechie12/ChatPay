@@ -1,6 +1,5 @@
-"use client"
-import { useState, useEffect, Suspense } from "react"
-import { useSearchParams, useRouter } from "next/navigation"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/router"
 import axios from "axios"
 import { Loader2 } from "lucide-react"
 
@@ -8,8 +7,7 @@ const USER_API = "http://localhost:3000"
 const MERCHANT_API = "http://localhost:3006"
 const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? ""
 
-function AuthPageInner() {
-  const searchParams = useSearchParams()
+export default function AuthPage() {
   const router = useRouter()
   const [role, setRole] = useState<"user" | "merchant">("user")
   const [tab, setTab] = useState<"signin" | "signup">("signin")
@@ -27,15 +25,16 @@ function AuthPageInner() {
       router.push("/merchant/overview/page")
       return
     }
-  }, [router])
+  }, [])
 
   useEffect(() => {
-    const code = searchParams?.get("code")
+    if (!router.isReady) return
+    const code = router.query.code as string | undefined
     if (code) {
       setRole("merchant")
       handleGoogleCallback(code)
     }
-  }, [searchParams])
+  }, [router.isReady])
 
   function field(key: keyof typeof form) {
     return (e: React.ChangeEvent<HTMLInputElement>) =>
@@ -268,13 +267,5 @@ function AuthPageInner() {
         </p>
       </div>
     </div>
-  )
-}
-
-export default function AuthPage() {
-  return (
-    <Suspense>
-      <AuthPageInner />
-    </Suspense>
   )
 }
