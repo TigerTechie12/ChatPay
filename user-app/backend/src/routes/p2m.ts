@@ -8,7 +8,7 @@ import { authMiddleware } from "chatpay-middleware"
 export const p2mRouter=Router()
 import IORedis from 'ioredis'
 p2mRouter.use(express.json())
-const redis=new IORedis()
+const redis = new IORedis(process.env.REDIS_URL || 'redis://localhost:6379', { maxRetriesPerRequest: null })
 
 p2mRouter.get('/merchant/:merchantId', authMiddleware, async(req: any, res: any) => {
   const merchantId = parseInt(req.params.merchantId)

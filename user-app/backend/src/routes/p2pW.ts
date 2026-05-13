@@ -4,7 +4,7 @@ import { authMiddleware } from "../../../../packages/middleware/src/middleware"
 const walletPayRouter=Router()
 const prisma=new PrismaClient()
 import IORedis from "ioredis"
-const redis=new IORedis()
+const redis = new IORedis(process.env.REDIS_URL || 'redis://localhost:6379', { maxRetriesPerRequest: null })
 walletPayRouter.post('/payAtWallet',authMiddleware,async(req,res)=>{
     const {phoneNumber,amount}=req.body
 

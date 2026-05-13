@@ -7,7 +7,7 @@ const prisma = new PrismaClient({adapter})
 import { authMiddleware } from "chatpay-middleware"
 import {withdrawalQueue} from '../lib/queue'
 import IORedis from "ioredis"
-const redis=new IORedis()
+const redis = new IORedis(process.env.REDIS_URL || 'redis://localhost:6379', { maxRetriesPerRequest: null })
 export const offRampRouter = Router()
 offRampRouter.use(express.json())
 offRampRouter.post("/offramp", authMiddleware, async(req, res) => {

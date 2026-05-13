@@ -13,7 +13,7 @@
   "dependencies": {
     "@prisma/adapter-pg": "^7.8.0",
     "@shreyash_iitr/common": "^1.0.0",
-    "bullmq": "^0.0.1",
+    "bullmq": "^5.72.1",
     "chatpay-db": "^2.256.1",
     "chatpay-middleware": "^2.2.31",
     "cors": "^2.8.6",

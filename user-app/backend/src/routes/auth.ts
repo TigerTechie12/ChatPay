@@ -10,7 +10,7 @@ import IORedis from 'ioredis'
 import { authMiddleware } from 'chatpay-middleware'
 
 const JWT_SECRET=process.env.JWT_SECRET || ""
-const redis = new IORedis()
+const redis = new IORedis(process.env.REDIS_URL || 'redis://localhost:6379', { maxRetriesPerRequest: null })
 
 router.post('/signup',async(req,res)=>{
   const name=req.body.name

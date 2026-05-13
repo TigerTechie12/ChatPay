@@ -9,7 +9,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '')
 export const userRouter = Router()
 import { authMiddleware } from 'chatpay-middleware'
 import IORedis from 'ioredis'
-const redis = new IORedis()
+const redis= new IORedis(process.env.REDIS_URL || 'redis://localhost:6379', { maxRetriesPerRequest: null })
 
 userRouter.post('/onramp', authMiddleware, async (req, res) => {
     const { amount } = req.body

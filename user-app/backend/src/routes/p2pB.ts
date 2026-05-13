@@ -6,7 +6,7 @@ import { withdrawalQueue } from '../lib/queue'
 const p2pBRouter=Router()
 const prisma=new PrismaClient()
 import IORedis from 'ioredis'
-const redis=new IORedis()
+const redis = new IORedis(process.env.REDIS_URL || 'redis://localhost:6379', { maxRetriesPerRequest: null })
 p2pBRouter.post('/payAtBank',authMiddleware,async(req,res)=>{
 const {amount,provider,accountNumber,ifscCode}=req.body
 const amountInPaise=amount*100
