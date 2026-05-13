@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build":"tsc -b"
   },
   "keywords": [],
   "author": "",
@@ -21,7 +22,8 @@
     "ioredis": "^5.10.1",
     "jsonwebtoken": "^9.0.3",
     "shreyash-chatpay-common": "^2.113.0",
-    "stripe": "^20.4.1"
+    "stripe": "^20.4.1",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",

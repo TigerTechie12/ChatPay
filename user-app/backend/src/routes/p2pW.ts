@@ -1,37 +1,49 @@
 import { Router } from "express"
-import { PrismaClient } from "@prisma/client"
-import { authMiddleware } from "../../../../packages/middleware/src/middleware"
-const walletPayRouter=Router()
-const prisma=new PrismaClient()
+import { PrismaClient } from "chatpay-db"
+import { PrismaPg } from "@prisma/adapter-pg"
+import { authMiddleware } from "chatpay-middleware"
+import { p2pWSchema } from "shreyash-chatpay-common"
+import { rateLimitMiddleware } from "../lib/rateLimiter"
 import IORedis from "ioredis"
-const redis = new IORedis(process.env.REDIS_URL || 'redis://localhost:6379', { maxRetriesPerRequest: null })
-walletPayRouter.post('/payAtWallet',authMiddleware,async(req,res)=>{
-    const {phoneNumber,amount}=req.body
 
-    const userId=req.userId
-    const amountInPaise=amount*100
-   try{
-const userBalance= await prisma.balance.findUnique({where:{userId:userId}})
-const availableBalance=userBalance.amount-userBalance.locked
-if(amountInPaise>availableBalance){
-    return res.status(400).json({message:"Insufficient Balance to pay"})}
+const adapter = new PrismaPg({connectionString: process.env.DATABASE_URL})
+const prisma = new PrismaClient({adapter})
+export const walletPayRouter = Router()
+const redis = new IORedis(process.env.REDIS_URL || 'redis://localhost:6379', {maxRetriesPerRequest: null})
 
-    const ifRecipent=await prisma.user.findUnique({where:{number:phoneNumber}})
-if(ifRecipent){
-const wallet2wallettxn=await prisma.$transaction(async(txn:any)=>{
-    await txn.$queryRaw`SELECT * FROM "Balance" WHERE "userId"=${userId} FOR UPDATE`
-const userCurrentBalance=await txn.balance.update({where:{userId:userId},data:{amount:{decrement:{amountInPaise}}}})
-const recipentCurrentBalance=await txn.balance.update({where:{number:phoneNumber},data:{amount:{increment:{amountInPaise}}}})
+const walletLimiter = rateLimitMiddleware('p2p-wallet', 10, 60)
 
-})
-await redis.del(`profile:${userId}`)
-return res.status(200).json({message:"Payment Successful to the Recipents wallet"})
+walletPayRouter.post('/payAtWallet', authMiddleware, walletLimiter, async(req, res) => {
+  const parsed = p2pWSchema.safeParse(req.body)
+  if (!parsed.success) return res.status(400).json({message: parsed.error.issues[0]?.message ?? 'Invalid input'})
+  const {phoneNumber, amount} = parsed.data
 
-}
-return res.status(404).json({message:"Recipent's wallet not found with the given phone number,try here:"})
+  const userId: any = req.userId
+  const amountInPaise = amount * 100
+  try {
+    const userBalance = await prisma.balance.findUnique({where: {userId}})
+    if (!userBalance) return res.status(404).json({message: "Balance not found"})
+    const availableBalance = userBalance.amount - userBalance.locked
+    if (amountInPaise > availableBalance) return res.status(400).json({message: "Insufficient Balance"})
 
-}
+    const recipient = await prisma.user.findUnique({where: {number: phoneNumber}})
+    if (!recipient) return res.status(404).json({message: "Recipient not found with given phone number"})
 
-catch(e:any){return res.status(400).json({message:e.message})
-}
+    await prisma.$transaction(async(txn: any) => {
+      await txn.$queryRaw`SELECT * FROM "Balance" WHERE "userId"=${userId} FOR UPDATE`
+      await txn.balance.update({where: {userId}, data: {amount: {decrement: amountInPaise}}})
+      await txn.balance.update({where: {userId: recipient.id}, data: {amount: {increment: amountInPaise}}})
+      await txn.p2pTransfer.create({data: {
+        senderId: userId,
+        receiverId: recipient.id,
+        amount: amountInPaise,
+        timestamp: new Date()
+      }})
+    })
+
+    await redis.del(`profile:${userId}`)
+    return res.status(200).json({message: "Payment Successful"})
+  } catch(e: any) {
+    return res.status(400).json({message: e.message})
+  }
 })

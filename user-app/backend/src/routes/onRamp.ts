@@ -1,28 +1,28 @@
-import jwt from 'jsonwebtoken'
 import { Router } from 'express'
 import Stripe from 'stripe'
 import { PrismaClient } from 'chatpay-db'
-import {PrismaPg} from '@prisma/adapter-pg'
+import { PrismaPg } from '@prisma/adapter-pg'
+import { OnRampSchema } from 'shreyash-chatpay-common'
+import { authMiddleware } from 'chatpay-middleware'
+import IORedis from 'ioredis'
 const adapter=new PrismaPg({connectionString:process.env.DATABASE_URL})
 const prisma = new PrismaClient({adapter})
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '')
 export const userRouter = Router()
-import { authMiddleware } from 'chatpay-middleware'
-import IORedis from 'ioredis'
-const redis= new IORedis(process.env.REDIS_URL || 'redis://localhost:6379', { maxRetriesPerRequest: null })
+const redis= new IORedis(process.env.REDIS_URL || 'redis://localhost:6379', {maxRetriesPerRequest: null})
+const onRampInput = OnRampSchema.pick({amount: true})
 
 userRouter.post('/onramp', authMiddleware, async (req, res) => {
-    const { amount } = req.body
+    const parsed = onRampInput.safeParse(req.body)
+    if (!parsed.success) return res.status(400).json({message: parsed.error.issues[0]?.message ?? 'Invalid input'})
+    const { amount } = parsed.data
     const token = JSON.stringify(Math.floor(Math.random() * 1000000) + "xacdcdcddq" + Math.floor(Math.random() * 1000000) + "wertyuio")
 
-    const headers = req.headers.authorization
-    const jwtToken = headers!.split(' ')[1]
-    const decode = jwt.decode(jwtToken || '') as { userId: number } | null
-    const id = decode?.userId
+    const id = req.userId as any
 
     const dbData = await prisma.onRampTransaction.create({
         data: {
-            startedAt:new Date(),
+            startedAt: new Date(),
             amount: amount * 100,
             token: token,
             status: "PENDING",

@@ -1,71 +1,60 @@
 import { Router } from 'express'
 import { PrismaClient } from 'chatpay-db'
-import {PrismaPg} from '@prisma/adapter-pg'
-import {UserSchema} from 'shreyash-chatpay-common'
+import { PrismaPg } from '@prisma/adapter-pg'
+import { UserSchema } from 'shreyash-chatpay-common'
 import jwt from 'jsonwebtoken'
-export const router=Router()
-const adapter=new PrismaPg({connectionString:process.env.DATABASE_URL})
-const prisma = new PrismaClient({adapter})
 import IORedis from 'ioredis'
 import { authMiddleware } from 'chatpay-middleware'
+import { rateLimitMiddleware } from '../lib/rateLimiter'
 
-const JWT_SECRET=process.env.JWT_SECRET || ""
-const redis = new IORedis(process.env.REDIS_URL || 'redis://localhost:6379', { maxRetriesPerRequest: null })
+export const router = Router()
+const adapter = new PrismaPg({connectionString: process.env.DATABASE_URL})
+const prisma = new PrismaClient({adapter})
+const JWT_SECRET = process.env.JWT_SECRET || ""
+const redis = new IORedis(process.env.REDIS_URL || 'redis://localhost:6379', {maxRetriesPerRequest: null})
 
-router.post('/signup',async(req,res)=>{
-  const name=req.body.name
-  const email=req.body.email
-  const password=req.body.password
-  const number=req.body.number
-  try{
-    const userExists=await prisma.user.findUnique({
-        where:{email:email,
-            number:number
-        }
-    })
-    if(userExists){
-     return   res.json({message:"User already exists"})
-    }
-    const userCreate=await prisma.user.create({
-        data:{
-            name:name,
-            email:email,
-            password:password,
-            number:number
-        }
-    })
+const authRateLimiter = rateLimitMiddleware('auth', 5, 60)
 
-res.status(200).json({message:"User created"})
-}
-  catch(e){message:"Error creating user"}
+router.post('/signup', authRateLimiter, async(req, res) => {
+  const parsed = UserSchema.safeParse(req.body)
+  if (!parsed.success) {
+    return res.status(400).json({message: parsed.error.issues[0]?.message ?? 'Invalid input'})
+  }
+  const {name, email, password, number} = parsed.data
+  const numberInt = parseInt(number, 10)
+  if (isNaN(numberInt)) return res.status(400).json({message: 'Invalid phone number'})
+  try {
+    const userExists = await prisma.user.findFirst({where: {OR: [{email}, {number: numberInt}]}})
+    if (userExists) return res.status(409).json({message: 'User already exists'})
+    await prisma.user.create({data: {name, email, password, number: numberInt}})
+    res.status(201).json({message: 'User created'})
+  } catch(e: any) {
+    res.status(500).json({message: 'Error creating user'})
+  }
 })
-router.post('/signin',async(req,res)=>{
-const email=req.body.email
-const password=req.body.password
-const name=req.body.name
-try{ const user:any=await prisma.user.findUnique({
-    where:{email:email,name:name}
+
+router.post('/signin', authRateLimiter, async(req, res) => {
+  const {email, password} = req.body as {email?: string; password?: string}
+  if (!email || !password) return res.status(400).json({message: 'Email and password required'})
+  try {
+    const user: any = await prisma.user.findUnique({where: {email}})
+    if (!user) return res.status(404).json({message: 'User not found'})
+    if (user.password !== password) return res.status(401).json({message: 'Invalid credentials'})
+    const minutes = new Date().getMinutes()
+    const token = jwt.sign(
+      {name: user.name, email, userId: user.id, time: minutes, exp: Math.floor(Date.now()/1000) + 3600},
+      JWT_SECRET
+    )
+    res.status(200).json({message: 'Signed in', token})
+  } catch(e: any) {
+    res.status(500).json({message: 'Error signing in'})
+  }
 })
-if(!user){return res.json({message:"User not found"})}
-const userId=user.id
-const now=new Date()
-const minutes=now.getMinutes()
-const token=jwt.sign({name:name,password:password,email:email,userId,time:minutes, exp: Math.floor(Date.now() / 1000) + (60 * 60)},JWT_SECRET)
-res.status(200).json({message:"User created",token:token})
 
-}
-
-catch(e){
-    return res.json({message:"Error signing in user"})
-}})
-
-router.post('/signout',authMiddleware,async(req,res)=>{
- const userId=req.userId
-    const now=new Date()
-const timeNow=now.getMinutes()
-const time:number | undefined=req.time
-const expiredTime=req.exp
-if(timeNow-time!<expiredTime!){
-await redis.set(`blacklist:${req.userId}`, 'true', 'EX', expiredTime! - (timeNow - time!))
-}
+router.post('/signout', authMiddleware, async(req, res) => {
+  const remaining = Math.max(0, (req.exp ?? 0) - Math.floor(Date.now()/1000))
+  if (remaining > 0) {
+    await redis.set(`blacklist:${req.userId}`, 'true', 'EX', remaining)
+  }
+  res.status(200).json({message: 'Signed out'})
 })
