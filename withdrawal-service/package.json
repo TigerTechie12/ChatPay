@@ -4,13 +4,18 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "postinstall": "node -e \"const fs=require('fs');const p=JSON.parse(fs.readFileSync('node_modules/chatpay-db/package.json','utf8'));p.main='generated/prisma/client.ts';p.types='generated/prisma/client.ts';fs.writeFileSync('node_modules/chatpay-db/package.json',JSON.stringify(p,null,2))\""
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
+  "devDependencies": {
+    "@types/node": "^20.0.0"
+  },
   "dependencies": {
+    "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
     "axios": "^1.14.0",
     "bullmq": "^5.72.1",
