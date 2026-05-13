@@ -11,8 +11,11 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@prisma/client": "^7.8.0",
     "axios": "^1.14.0",
     "bullmq": "^5.72.1",
+    "chatpay-db": "^2.256.1",
+    "ioredis": "^5.10.1",
     "razorpay": "^2.9.6",
     "redis": "^5.11.0"
   }

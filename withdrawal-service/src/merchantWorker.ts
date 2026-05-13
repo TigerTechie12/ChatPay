@@ -1,6 +1,6 @@
 import {Worker,Job} from 'bullmq'
 import IORedis from 'ioredis'
-import {PrismaClient} from '@prisma/client'
+import {PrismaClient} from 'chatpay-db'
 import axios from 'axios'
 
 const redisConnection = new IORedis()
