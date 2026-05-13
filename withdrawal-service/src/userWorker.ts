@@ -4,7 +4,7 @@ import {PrismaClient} from 'chatpay-db'
 import {PrismaPg} from '@prisma/adapter-pg'
 import axios from 'axios'
 
-const redisConnection = new IORedis()
+const redisConnection = new IORedis(process.env.REDIS_URL || 'redis://localhost:6379', { maxRetriesPerRequest: null })
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL })
 const prisma=new PrismaClient({ adapter })
 
@@ -39,9 +39,8 @@ const worker=new Worker('withdrawalQueue',async(job:Job)=>{
         await prisma.offRampTransaction.update({where:{id},data:{status:'RETRYPENDING'}})
         throw new Error('OffRamp Transaction Failed,Marked for Retry')
     }
-})
+},{ connection: redisConnection })
 
-worker.run()
 worker.on('completed',(job:Job,returnvalue:any)=>{
     console.log(`Job ${job.id} completed successfully!`)
 })
