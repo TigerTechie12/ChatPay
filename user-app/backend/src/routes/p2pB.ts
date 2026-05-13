@@ -5,12 +5,11 @@ import { authMiddleware } from 'chatpay-middleware'
 import { p2pBSchema } from 'shreyash-chatpay-common'
 import { rateLimitMiddleware } from '../lib/rateLimiter'
 import { withdrawalQueue } from '../lib/queue'
-import IORedis from 'ioredis'
+import redis from '../lib/redis'
 
 const adapter = new PrismaPg({connectionString: process.env.DATABASE_URL})
 const prisma = new PrismaClient({adapter})
 export const p2pBRouter = Router()
-const redis = new IORedis(process.env.REDIS_URL || 'redis://localhost:6379', {maxRetriesPerRequest: null})
 
 const bankLimiter = rateLimitMiddleware('p2p-bank', 3, 60)
 

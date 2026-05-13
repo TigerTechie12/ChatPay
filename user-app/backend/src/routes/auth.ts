@@ -3,7 +3,7 @@ import { PrismaClient } from 'chatpay-db'
 import { PrismaPg } from '@prisma/adapter-pg'
 import { UserSchema } from 'shreyash-chatpay-common'
 import jwt from 'jsonwebtoken'
-import IORedis from 'ioredis'
+import redis from '../lib/redis'
 import { authMiddleware } from 'chatpay-middleware'
 import { rateLimitMiddleware } from '../lib/rateLimiter'
 
@@ -11,7 +11,6 @@ export const router = Router()
 const adapter = new PrismaPg({connectionString: process.env.DATABASE_URL})
 const prisma = new PrismaClient({adapter})
 const JWT_SECRET = process.env.JWT_SECRET || ""
-const redis = new IORedis(process.env.REDIS_URL || 'redis://localhost:6379', {maxRetriesPerRequest: null})
 
 const authRateLimiter = rateLimitMiddleware('auth', 5, 60)
 

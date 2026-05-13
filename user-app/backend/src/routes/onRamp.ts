@@ -4,12 +4,11 @@ import { PrismaClient } from 'chatpay-db'
 import { PrismaPg } from '@prisma/adapter-pg'
 import { OnRampSchema } from 'shreyash-chatpay-common'
 import { authMiddleware } from 'chatpay-middleware'
-import IORedis from 'ioredis'
+import redis from '../lib/redis'
 const adapter=new PrismaPg({connectionString:process.env.DATABASE_URL})
 const prisma = new PrismaClient({adapter})
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '')
 export const userRouter = Router()
-const redis= new IORedis(process.env.REDIS_URL || 'redis://localhost:6379', {maxRetriesPerRequest: null})
 const onRampInput = OnRampSchema.pick({amount: true})
 
 userRouter.post('/onramp', authMiddleware, async (req, res) => {

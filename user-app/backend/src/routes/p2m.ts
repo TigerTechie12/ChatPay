@@ -5,13 +5,12 @@ import { PrismaPg } from '@prisma/adapter-pg'
 import { authMiddleware } from "chatpay-middleware"
 import { merchantPaymentSchema } from 'shreyash-chatpay-common'
 import { rateLimitMiddleware } from '../lib/rateLimiter'
-import IORedis from 'ioredis'
+import redis from '../lib/redis'
 
 const adapter = new PrismaPg({connectionString: process.env.DATABASE_URL})
 const prisma = new PrismaClient({adapter})
 export const p2mRouter = Router()
 p2mRouter.use(express.json())
-const redis = new IORedis(process.env.REDIS_URL || 'redis://localhost:6379', {maxRetriesPerRequest: null})
 
 const transferLimiter = rateLimitMiddleware('p2m', 10, 60)
 

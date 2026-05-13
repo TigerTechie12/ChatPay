@@ -1,6 +1,4 @@
-import IORedis from 'ioredis'
-
-const redis = new IORedis(process.env.REDIS_URL || 'redis://localhost:6379', {maxRetriesPerRequest: null})
+import redis from './redis'
 
 export function rateLimitMiddleware(prefix: string, limit: number, windowSec: number) {
   return async (req: any, res: any, next: any) => {

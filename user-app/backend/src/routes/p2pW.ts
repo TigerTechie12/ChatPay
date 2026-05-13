@@ -4,12 +4,11 @@ import { PrismaPg } from "@prisma/adapter-pg"
 import { authMiddleware } from "chatpay-middleware"
 import { p2pWSchema } from "shreyash-chatpay-common"
 import { rateLimitMiddleware } from "../lib/rateLimiter"
-import IORedis from "ioredis"
+import redis from "../lib/redis"
 
 const adapter = new PrismaPg({connectionString: process.env.DATABASE_URL})
 const prisma = new PrismaClient({adapter})
 export const walletPayRouter = Router()
-const redis = new IORedis(process.env.REDIS_URL || 'redis://localhost:6379', {maxRetriesPerRequest: null})
 
 const walletLimiter = rateLimitMiddleware('p2p-wallet', 10, 60)
 
