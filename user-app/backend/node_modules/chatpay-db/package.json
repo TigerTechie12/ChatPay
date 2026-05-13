@@ -1,15 +1,16 @@
 {
   "name": "chatpay-db",
-  "version": "2.256.1",
+  "version": "2.256.3",
   "description": "",
-  "main": "generated/prisma/client.ts",
-  "types": "generated/prisma/client.ts",
+  "main": "generated/prisma/index.js",
+  "types": "generated/prisma/index.d.ts",
   "license": "ISC",
   "scripts": {
     "postinstall": "prisma generate --schema=./prisma/schema.prisma"
   },
   "dependencies": {
-    "prisma": "^7.5.0"
+    "prisma": "^7.5.0",
+    "@prisma/client": "^7.5.0"
   },
   "devDependencies": {
     "@types/node": "^25.5.0",
