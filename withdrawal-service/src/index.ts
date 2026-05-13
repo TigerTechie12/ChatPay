@@ -1,0 +1,2 @@
+import './userWorker'
+import './merchantWorker'
