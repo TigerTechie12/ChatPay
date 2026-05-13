@@ -3,7 +3,7 @@ import { useState } from "react"
 import axios from "axios"
 import { Bell, Loader2 } from "lucide-react"
 
-const API = "http://localhost:3000/api/v1"
+const API = process.env.USER_BACKEND_URL
 
 const BANKS = [
   { id: "hdfc",  name: "HDFC Bank",    last4: "4521", initials: "HB", color: "bg-blue-700" },

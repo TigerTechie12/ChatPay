@@ -4,7 +4,7 @@ import React, { useState, useRef } from 'react'
 import { Delete, Send } from 'lucide-react'
 import axios from 'axios'
 
-const USER_API = "http://localhost:3000"
+const USER_API = process.env.USER_BACKEND_URL
 
 const PaymentKeypad = () => {
   const [amount, setAmount] = useState('0')

@@ -3,7 +3,7 @@ import { useState, useEffect } from "react"
 import axios from "axios"
 import { Bell, Loader2, Pencil } from "lucide-react"
 
-const API = "http://localhost:3000/api/v1"
+const API = process.env.USER_BACKEND_URL
 
 const IFSC_BANK_MAP: Record<string, string> = {
   HDFC: "HDFC", SBIN: "SBI", UTIB: "Axis", ICIC: "ICICI",

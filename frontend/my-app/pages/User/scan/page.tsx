@@ -3,7 +3,7 @@ import { useEffect, useRef, useState, useCallback } from "react"
 import axios from "axios"
 import { Bell, Loader2, CheckCircle2, X } from "lucide-react"
 
-const API = "http://localhost:3000/api/v1"
+const API = process.env.USER_BACKEND_URL
 
 interface MerchantInfo { id: number; name: string; verified: boolean }
 interface ParsedQR { merchantId: number; amount: number | null; label: string }

@@ -5,7 +5,7 @@ import util from "tweetnacl-util"
 import { getOrCreateKeyPair, encryptMessage, decryptMessage } from "@/lib/chat/crypto"
 import { Sidebar } from "lucide-react"
 
-const CHAT_API = "http://localhost:3001"
+const CHAT_API = process.env.NEXT_PUBLIC_CHAT_API_URL ?? "http://localhost:3003"
 const WS_URL = process.env.NEXT_PUBLIC_CHAT_WS_URL ?? "ws://localhost:3003"
 
 const avatarColors = ["bg-orange-500","bg-teal-600","bg-green-600","bg-blue-500","bg-purple-500","bg-red-500","bg-pink-500","bg-indigo-500"]
