@@ -1,22 +1,21 @@
-import WebSocket, { WebSocketServer } from 'ws'
+import { WebSocketServer } from 'ws'
 import { PrismaClient } from 'chatpay-db'
 import { PrismaPg } from '@prisma/adapter-pg'
+import http from 'http'
+import express from 'express'
+import url from 'url'
+import jwt from 'jsonwebtoken'
+import { chatRouter } from './routes/route'
+import redis from './lib/redis'
 
 const adapter = new PrismaPg({connectionString: process.env.DATABASE_URL})
 const prisma = new PrismaClient({adapter})
-import http from 'http'
-import express from 'express'
+const JWT_SECRET = process.env.JWT_SECRET as string
+const activeConnections = new Map()
 const app = express()
 app.use(chatRouter)
 const wss = new WebSocketServer({ noServer: true })
 const server = http.createServer(app)
-import url from 'url'
-
-import { chatRouter } from './routes/route'
-import jwt from 'jsonwebtoken'
-const JWT_SECRET = process.env.JWT_SECRET as string
-const activeConnections = new Map()
-import redis from "./lib/redis"
 
 server.on('upgrade', (req, socket, head) => {
   const { query } = url.parse(req.url as string, true)
