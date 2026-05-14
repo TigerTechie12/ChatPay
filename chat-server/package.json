@@ -4,21 +4,30 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc -b",
+    "start": "node dist/index.js"
+  },
+  "engines": {
+    "node": "20.x"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@prisma/adapter-pg": "^7.8.0",
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/ws": "^8.18.1",
+    "chatpay-db": "^2.256.3",
+    "chatpay-middleware": "^2.2.31",
     "cors": "^2.8.6",
     "express": "^5.2.1",
     "http": "^0.0.1-security",
     "ioredis": "^5.10.1",
     "jsonwebtoken": "^9.0.3",
+    "shreyash-chatpay-common": "^2.113.0",
     "url": "^0.11.4",
     "ws": "^8.20.0"
   }

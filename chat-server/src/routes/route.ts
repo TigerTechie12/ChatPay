@@ -1,13 +1,16 @@
 import express from 'express'
 import { Router } from "express"
-import { authMiddleware } from "../../../../packages/middleware/src/middleware"
-import { PrismaClient } from '@prisma/client'
-const prisma = new PrismaClient()
+import { authMiddleware } from "chatpay-middleware"
+import { PrismaClient } from 'chatpay-db'
+import { PrismaPg } from '@prisma/adapter-pg'
+
+const adapter = new PrismaPg({connectionString: process.env.DATABASE_URL})
+const prisma = new PrismaClient({adapter})
 export const chatRouter = Router()
 chatRouter.use(express.json())
 chatRouter.use(authMiddleware)
 
-chatRouter.get('/api/conversations', async (req, res) => {
+chatRouter.get('/api/conversations', async (req:any, res) => {
   const userId = req.userId
   try {
     const myParticipations = await prisma.conversationParticipant.findMany({
@@ -30,7 +33,7 @@ chatRouter.get('/api/conversations', async (req, res) => {
   } catch (e: any) { return res.status(400).json({ message: e.message }) }
 })
 
-chatRouter.post('/api/conversations', async (req, res) => {
+chatRouter.post('/api/conversations', async (req:any, res:any) => {
   const otherUserId = req.body.otherUserId
   const userId = req.userId
   try {
@@ -60,7 +63,7 @@ chatRouter.post('/api/conversations', async (req, res) => {
   } catch (e: any) { return res.status(400).json({ message: e.message }) }
 })
 
-chatRouter.post('/api/users/publickey', async (req, res) => {
+chatRouter.post('/api/users/publickey', async (req:any, res:any) => {
   const userId = req.userId
   const { publicKey } = req.body
   try {
@@ -69,7 +72,7 @@ chatRouter.post('/api/users/publickey', async (req, res) => {
   } catch (e: any) { return res.status(400).json({ message: e.message }) }
 })
 
-chatRouter.get('/api/messages/:conversationId', async (req, res) => {
+chatRouter.get('/api/messages/:conversationId', async (req:any, res) => {
   try {
     const conversationId = Number(req.params.conversationId)
     const checkUser = await prisma.conversationParticipant.findFirst({
@@ -88,7 +91,7 @@ chatRouter.get('/api/messages/:conversationId', async (req, res) => {
   } catch (e: any) { return res.status(400).json({ message: e.message }) }
 })
 
-chatRouter.get('/api/users/:userId/publickey', async (req, res) => {
+chatRouter.get('/api/users/:userId/publickey', async (req:any, res:any) => {
   const userId = Number(req.params.userId)
   try {
     const user = await prisma.user.findUnique({ where: { id: userId } })
