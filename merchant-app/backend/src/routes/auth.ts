@@ -1,11 +1,17 @@
 import { Router } from 'express'
-import { PrismaClient } from '@prisma/client'
-const authRouter=Router()
-const prisma=new PrismaClient()
+import { PrismaClient } from 'chatpay-db'
+import { PrismaPg } from '@prisma/adapter-pg'
 import jwt from 'jsonwebtoken'
+import { authMerchantSchema } from 'shreyash-chatpay-common'
 
-authRouter.post('/api/auth/google',async(req,res)=>{
-    const {code}=req.body
+export const authRouter=Router()
+const adapter = new PrismaPg({connectionString: process.env.DATABASE_URL})
+const prisma = new PrismaClient({adapter})
+
+authRouter.post('/auth/google',async(req,res)=>{
+    const parsed = authMerchantSchema.safeParse(req.body)
+    if(!parsed.success) return res.status(400).json({message: parsed.error.issues[0]?.message ?? 'Invalid input'})
+    const {code}=parsed.data
 
    try{
 
@@ -36,9 +42,8 @@ return res.json({token:token})
 }
 const newMerchant=await prisma.merchant.create({data:{
     name:name,
-    email:email,
-    authType:'GOOGLE'
-}})
+    authType:"Google",
+    email:email}})
 
 const token=jwt.sign({email:email,name:name,userId:newMerchant.id,time:Date.now(),exp:Math.floor(Date.now()/1000)+(60*60)},process.env.JWT_SECRET!)
 res.status(200).json({token:token,merchantId:newMerchant.id,name:name,email:email})

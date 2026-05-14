@@ -1,8 +1,10 @@
-import express from 'express'
-import IORedis from 'ioredis'
-import { PrismaClient } from '@prisma/client'
-const prisma=new PrismaClient()
-const redis=new IORedis()
+
+import { PrismaClient } from 'chatpay-db'
+import { PrismaPg } from '@prisma/adapter-pg'
+
+const adapter = new PrismaPg({connectionString: process.env.DATABASE_URL})
+const prisma = new PrismaClient({adapter})
+import redis from "../lib/redis"
 import cron from 'node-cron'
 import { merchantWithdrawalQueue } from '../lib/queue'
 
@@ -14,51 +16,46 @@ const allMerchants=await prisma.merchant.findMany({where:{
     bankIfscCode:{not:null},
     bankAccountName:{not:null}
 },include:{
-    merchantBalance:true,
-    offRampTransaction:true
+    MerchantBalance:true,
+    OffRampTransaction:true
 }
 })
 
-const filteredMerchants=allMerchants.filter((m:any)=>{const hasPending = m.offRampTransaction.some((mb: any) => {
+const filteredMerchants=allMerchants.filter((m:any)=>{const hasPending = m.OffRampTransaction.some((mb: any) => {
     return mb.status === 'QUEUED' || mb.status === 'RETRYPENDING' || mb.status === 'PROCESSING'
   })
-    return m.merchantBalance.amount !==0 && !hasPending
+    return m.MerchantBalance?.amount !==0 && !hasPending
 })
 
-for(let i=0; i<filteredMerchants.length; i++){
+for(const merchant of filteredMerchants){
 
 try{
 let offRampTransaction:any
+const {id: merchantId, bankAccountNumber, bankIfscCode} = merchant
 await prisma.$transaction(async(txn:any)=>{
-
-    const merchantId=filteredMerchants[i].id
-
     await txn.$queryRaw`SELECT * FROM "MerchantBalance" WHERE "merchantId"=${merchantId} FOR UPDATE`
 
-    const merchantDetails= await txn.merchantBalance.findUnique({where:{merchantId:merchantId}})
+    const merchantDetails= await txn.merchantBalance.findUnique({where:{merchantId}})
+    if(!merchantDetails) throw new Error('Merchant balance not found')
     const increment=merchantDetails.amount
-        const bankAccountName=filteredMerchants[i].bankAccountName
-        const bankAccountNumber=filteredMerchants[i].bankAccountNumber
-        const bankIfscCode=filteredMerchants[i].bankIfscCode
-await txn.merchantBalance.update({where:{merchantId:merchantId},data:{
-    locked:{increment:increment}
+await txn.merchantBalance.update({where:{merchantId},data:{
+    locked:{increment}
 }})
 offRampTransaction=await txn.offRampTransaction.create({
 data:{
     amount:increment,
-accountNumber:bankAccountNumber,
-ifscCode:bankIfscCode,
-provider:bankAccountName,
-startedAt:new Date(),
-merchantId:merchantId,
-status:'QUEUED'
+    accountNumber:bankAccountNumber ?? '',
+    ifscCode:bankIfscCode ?? '',
+    startedAt:new Date(),
+    merchantId,
+    status:'QUEUED'
 }})
 
 })
 
-await merchantWithdrawalQueue.add('offRampTxn',{offRampTxnId:offRampTransaction.id},{removeOnComplete:true,removeOnFail:{age:24*3600},attempts:5,backoff:{type:'fixed',delay:10000}})
+await merchantWithdrawalQueue.add('offRampTxn',{offRampTxnId:offRampTransaction.id},{jobId:String(offRampTransaction.id),removeOnComplete:true,removeOnFail:{age:24*3600},attempts:5,backoff:{type:'fixed',delay:10000}})
 
-}catch(e){console.log(`Payout failed for merchant ${filteredMerchants[i].id}:`,e);continue}
+}catch(e){console.log(`Payout failed for merchant ${merchant.id}:`,e);continue}
 
 }
 

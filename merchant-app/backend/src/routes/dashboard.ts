@@ -1,20 +1,25 @@
 import express from 'express'
 import { Router } from 'express'
-import { PrismaClient } from '@prisma/client'
-import { authMiddleware } from '../../../../packages/middleware/src/middleware'
-const dashboardRouter=Router()
-const prisma=new PrismaClient()
+import { PrismaClient } from 'chatpay-db'
+import { PrismaPg } from '@prisma/adapter-pg'
+
+const adapter = new PrismaPg({connectionString: process.env.DATABASE_URL})
+const prisma = new PrismaClient({adapter})
+import { authMiddleware } from 'chatpay-middleware'
+export const dashboardRouter=Router()
 dashboardRouter.use(express.json())
 dashboardRouter.use(authMiddleware)
 
-dashboardRouter.get('/api/merchant/balance',async(req,res)=>{
+dashboardRouter.get('/merchant/balance',async(req:any,res:any)=>{
     const merchantId=req.userId
+    if(!merchantId) return res.status(400).json({message:"Invalid merchant ID"})
     const merchantBalance=await prisma.merchantBalance.findUnique({where:{merchantId},select:{amount:true,locked:true}})
-const availableBalnce=merchantBalance.amount-merchantBalance.locked
-return res.status(200).json({availableBalance:availableBalnce,totalBalance:merchantBalance.amount,locked:merchantBalance.locked})
+    if(!merchantBalance) return res.status(404).json({message:"Balance not found"})
+    const availableBalnce=merchantBalance.amount-merchantBalance.locked
+    return res.status(200).json({availableBalance:availableBalnce,totalBalance:merchantBalance.amount,locked:merchantBalance.locked})
 })
 
-dashboardRouter.get('/api/merchant/transactions',async(req,res)=>{
+dashboardRouter.get('/merchant/transactions',async(req:any,res:any)=>{
     const merchantId=req.userId
     const transactions=await prisma.merchantPayment.findMany({
       where:{merchantId},
@@ -25,7 +30,7 @@ const merchantPayments=transactions.map((t:any)=>({id:t.id,userId:t.userId,userN
 return res.status(200).json({merchantPayments})
 })
 
-dashboardRouter.get('/api/merchant/payouts',async(req,res)=>{
+dashboardRouter.get('/merchant/payouts',async(req:any,res:any)=>{
   const merchantId=req.userId
   const payouts=await prisma.offRampTransaction.findMany({
     where:{merchantId},
