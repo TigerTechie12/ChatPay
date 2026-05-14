@@ -3,8 +3,8 @@ import { useRouter } from "next/router"
 import axios from "axios"
 import { Loader2 } from "lucide-react"
 
-const USER_API = "http://localhost:3000"
-const MERCHANT_API = "http://localhost:3006"
+const USER_API = process.env.USER_BACKEND_URL
+const MERCHANT_API = process.env.MERCHANT_BACKEND_URL
 const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? ""
 
 export default function AuthPage() {

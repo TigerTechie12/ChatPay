@@ -4,8 +4,8 @@ import axios from "axios"
 import { Bell, Download, X } from "lucide-react"
 import QRCode from "qrcode"
 
-const API = "http://localhost:3006"
-const WS_URL = "ws://localhost:8080"
+const API = process.env.MERCHANT_BACKEND_URL
+const WS_URL = process.env.MERCHANT_BACKEND_URL
 
 const AVATAR_COLORS = [
   "bg-orange-500","bg-teal-600","bg-green-600","bg-blue-500",

@@ -3,7 +3,7 @@ import { useState, useEffect } from "react"
 import axios from "axios"
 import { Bell, Pencil, Check, Loader2, X } from "lucide-react"
 
-const API = "http://localhost:3006"
+const API = process.env.MERCHANT_BACKEND_URL
 
 const ACCENTS = {
   green:  { btn: "bg-green-600 hover:bg-green-700"   },
