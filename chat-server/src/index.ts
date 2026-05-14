@@ -7,10 +7,12 @@ const prisma = new PrismaClient({adapter})
 import http from 'http'
 import express from 'express'
 const app = express()
+app.use(chatRouter)
 const wss = new WebSocketServer({ noServer: true })
 const server = http.createServer(app)
 import url from 'url'
 
+import { chatRouter } from './routes/route'
 import jwt from 'jsonwebtoken'
 const JWT_SECRET = process.env.JWT_SECRET as string
 const activeConnections = new Map()
