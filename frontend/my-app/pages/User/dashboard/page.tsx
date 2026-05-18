@@ -3,7 +3,7 @@ import { useState, useEffect } from "react"
 import axios from "axios"
 import { PlusCircle, Building2, QrCode, ArrowUpRight, ArrowDownLeft, Download } from "lucide-react"
 
-const API = process.env.USER_BACKEND_URL
+const API = process.env.NEXT_PUBLIC_USER_BACKEND_URL
 
 const AVATAR_COLORS = [
   "bg-orange-500","bg-teal-600","bg-green-600","bg-blue-500","bg-purple-500","bg-red-500","bg-pink-500","bg-indigo-500",

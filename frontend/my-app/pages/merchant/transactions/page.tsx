@@ -3,8 +3,8 @@ import { useState, useEffect, useRef } from "react"
 import axios from "axios"
 import { Bell, X } from "lucide-react"
 
-const API = process.env.MERCHANT_BACKEND_URL
-const WS_URL = process.env.MERCHANT_BACKEND_URL
+const API = process.env.NEXT_PUBLIC_MERCHANT_BACKEND_URL
+const WS_URL = process.env.NEXT_PUBLIC_MERCHANT_BACKEND_URL
 
 const AVATAR_COLORS = [
   "bg-orange-500","bg-teal-600","bg-green-600","bg-blue-500",

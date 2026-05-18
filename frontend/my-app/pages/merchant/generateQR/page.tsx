@@ -4,7 +4,7 @@ import axios from "axios"
 import QRCode from "qrcode"
 import { Download, Copy, Check, X } from "lucide-react"
 
-const API = process.env.MERCHANT_BACKEND_URL
+const API = process.env.NEXT_PUBLIC_MERCHANT_BACKEND_URL
 
 const ACCENTS = {
   green:  { text: "text-green-600" },
