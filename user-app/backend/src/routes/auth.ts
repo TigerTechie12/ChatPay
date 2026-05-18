@@ -28,7 +28,8 @@ router.post('/signup', authRateLimiter, async(req, res) => {
     await prisma.user.create({data: {name, email, password, number: numberInt}})
     res.status(201).json({message: 'User created'})
   } catch(e: any) {
-    res.status(500).json({message: 'Error creating user'})
+    console.error('[signup error]', e?.message, e?.code, e?.meta)
+    res.status(500).json({message: 'Error creating user', error: e?.message})
   }
 })
 
