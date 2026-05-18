@@ -9,11 +9,14 @@ export function rateLimitMiddleware(prefix: string, limit: number, windowSec: nu
     pipeline.zcard(key)
     pipeline.zadd(key, now, `${now}-${Math.random()}`)
     pipeline.expire(key, windowSec)
-    const results: any = await pipeline.exec()
-    const count: number = (results[1] as any)?.[1] ?? 0
-    if (count >= limit) {
-      res.status(429).json({message: 'Too many requests', retryAfter: windowSec})
-      return
+    try {
+      const results: any = await pipeline.exec()
+      const count: number = (results[1] as any)?.[1] ?? 0
+      if (count >= limit) {
+        res.status(429).json({message: 'Too many requests', retryAfter: windowSec})
+        return
+      }
+    } catch {
     }
     next()
   }
