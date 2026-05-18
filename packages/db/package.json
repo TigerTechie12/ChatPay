@@ -1,6 +1,6 @@
 {
   "name": "chatpay-db",
-  "version": "2.256.3",
+  "version": "2.256.5",
   "description": "",
   "main": "generated/prisma/index.js",
   "types": "generated/prisma/index.d.ts",

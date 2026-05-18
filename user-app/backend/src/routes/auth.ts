@@ -20,12 +20,12 @@ router.post('/signup', authRateLimiter, async(req, res) => {
     return res.status(400).json({message: parsed.error.issues[0]?.message ?? 'Invalid input'})
   }
   const {name, email, password, number} = parsed.data
-  const numberInt = parseInt(number, 10)
-  if (isNaN(numberInt)) return res.status(400).json({message: 'Invalid phone number'})
+  let numberBig: bigint
+  try { numberBig = BigInt(number) } catch { return res.status(400).json({message: 'Invalid phone number'}) }
   try {
-    const userExists = await prisma.user.findFirst({where: {OR: [{email}, {number: numberInt}]}})
+    const userExists = await prisma.user.findFirst({where: {OR: [{email}, {number: numberBig}]}})
     if (userExists) return res.status(409).json({message: 'User already exists'})
-    await prisma.user.create({data: {name, email, password, number: numberInt}})
+    await prisma.user.create({data: {name, email, password, number: numberBig}})
     res.status(201).json({message: 'User created'})
   } catch(e: any) {
     console.error('[signup error]', e?.message, e?.code, e?.meta)
