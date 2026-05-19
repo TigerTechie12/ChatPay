@@ -58,3 +58,39 @@ router.post('/signout', authMiddleware, async(req, res) => {
   }
   res.status(200).json({message: 'Signed out'})
 })
+
+router.get('/me', authMiddleware, async(req: any, res) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: {id: req.userId},
+      select: {id: true, name: true, email: true, number: true}
+    })
+    if (!user) return res.status(404).json({message: 'User not found'})
+    return res.json({...user, number: user.number?.toString() ?? null})
+  } catch(e: any) {
+    return res.status(500).json({message: 'Error fetching profile'})
+  }
+})
+
+router.get('/users/search', authMiddleware, async(req: any, res) => {
+  const q = ((req.query.q as string) ?? '').trim()
+  if (q.length < 2) return res.json({users: []})
+  try {
+    const isNumber = /^\d+$/.test(q)
+    const users: any[] = await prisma.user.findMany({
+      where: {
+        AND: [
+          {id: {not: req.userId}},
+          isNumber
+            ? {number: BigInt(q)}
+            : {name: {contains: q, mode: 'insensitive'}}
+        ]
+      },
+      select: {id: true, name: true, number: true},
+      take: 10
+    })
+    return res.json({users: users.map(u => ({...u, number: u.number?.toString() ?? null}))})
+  } catch(e: any) {
+    return res.status(500).json({message: 'Error searching users'})
+  }
+})
