@@ -5,12 +5,11 @@ import { PrismaPg } from '@prisma/adapter-pg'
 import { authMiddleware } from "chatpay-middleware"
 import { withdrawalQueue } from '../lib/queue'
 import { rateLimitMiddleware } from '../lib/rateLimiter'
-import IORedis from "ioredis"
+import redis from '../lib/redis'
 import z from "zod"
 
 const adapter = new PrismaPg({connectionString: process.env.DATABASE_URL})
 const prisma = new PrismaClient({adapter})
-const redis = new IORedis(process.env.REDIS_URL || 'redis://localhost:6379', {maxRetriesPerRequest: null})
 export const offRampRouter = Router()
 offRampRouter.use(express.json())
 

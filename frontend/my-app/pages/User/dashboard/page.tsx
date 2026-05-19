@@ -1,7 +1,9 @@
 "use client"
 import { useState, useEffect } from "react"
 import axios from "axios"
-import { PlusCircle, Building2, QrCode, ArrowUpRight, ArrowDownLeft, Download } from "lucide-react"
+import { useRouter } from "next/router"
+import { PlusCircle, Building2, QrCode, ArrowUpRight, ArrowDownLeft, Download, Send } from "lucide-react"
+import { UserLayout } from "@/components/UserLayout"
 
 const API = process.env.NEXT_PUBLIC_USER_BACKEND_URL
 
@@ -130,6 +132,7 @@ function ActivityChart({ data, filter }: { data: MonthlyData; filter: ChartFilte
 }
 
 export function Dashboard() {
+  const router = useRouter()
   const [balance, setBalance] = useState(0)
   const [locked, setLocked] = useState(0)
   const [transactions, setTransactions] = useState<any[]>([])
@@ -142,9 +145,9 @@ export function Dashboard() {
     const headers = { Authorization: `Bearer ${token}` }
 
     Promise.all([
-      axios.get(`${API}/api/balance`, { headers }),
-      axios.get(`${API}/transactions`, { headers }),
-      axios.get(`${API}/monthly-stats`, { headers }),
+      axios.get(`${API}/api/v1/api/balance`, { headers }),
+      axios.get(`${API}/api/v1/transactions`, { headers }),
+      axios.get(`${API}/api/v1/monthly-stats`, { headers }),
     ])
       .then(([balRes, txRes, statsRes]) => {
         setBalance(balRes.data.balance ?? 0)
@@ -165,7 +168,21 @@ export function Dashboard() {
   const receivedCount = transactions.filter(t => t.direction === "credit").length
   const available = balance - locked
 
+  const sendAction = (
+    <button
+      onClick={() => router.push("/User/SendMoney/page")}
+      className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
+    >
+      <Send className="w-4 h-4" /> Send money
+    </button>
+  )
+
   return (
+    <UserLayout
+      title="Good afternoon"
+      subtitle="Here's what's moving in your wallet today."
+      action={sendAction}
+    >
     <div className="p-6 max-w-6xl mx-auto space-y-5">
 
       <div className="grid grid-cols-3 gap-4">
@@ -277,6 +294,7 @@ export function Dashboard() {
         </div>
       </div>
     </div>
+    </UserLayout>
   )
 }
 
