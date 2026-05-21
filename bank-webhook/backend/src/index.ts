@@ -26,6 +26,11 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (request, 
       const token = session.metadata?.token
       const amount = session.amount_total
 
+      if (!token) {
+        console.error('[webhook] No token in session metadata. metadata =', JSON.stringify(session.metadata))
+        return response.json({ received: true })
+      }
+
       const txn = await prisma.onRampTransaction.findUnique({ where: { token } })
       if (!txn) {
         console.error('[webhook] No onRampTransaction found for token', token)

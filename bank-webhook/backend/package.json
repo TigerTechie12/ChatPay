@@ -5,7 +5,8 @@
   "type": "commonjs",
   "scripts": {
     "postinstall": "node -e \"const fs=require('fs');const p=JSON.parse(fs.readFileSync('node_modules/chatpay-db/package.json','utf8'));p.main='generated/prisma/client.ts';fs.writeFileSync('node_modules/chatpay-db/package.json',JSON.stringify(p,null,2))\"",
-    "start": "tsx src/index.ts"
+    "start": "tsx src/index.ts",
+    "build": "tsc -b"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.8.0",
