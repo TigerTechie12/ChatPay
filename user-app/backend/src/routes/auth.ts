@@ -4,6 +4,7 @@ import { PrismaPg } from '@prisma/adapter-pg'
 import { UserSchema } from 'shreyash-chatpay-common'
 import jwt from 'jsonwebtoken'
 import bcrypt from 'bcryptjs'
+import { randomUUID } from 'crypto'
 import redis from '../lib/redis'
 import { authMiddleware } from 'chatpay-middleware'
 import { rateLimitMiddleware } from '../lib/rateLimiter'
@@ -43,9 +44,10 @@ router.post('/signin', authRateLimiter, async(req, res) => {
     if (!user) return res.status(404).json({message: 'User not found'})
     const passwordMatch = await bcrypt.compare(password, user.password)
     if (!passwordMatch) return res.status(401).json({message: 'Invalid credentials'})
+    await redis.del(`blacklist:${user.id}`)
     const minutes = new Date().getMinutes()
     const token = jwt.sign(
-      {name: user.name, email, userId: user.id, time: minutes, exp: Math.floor(Date.now()/1000) + 3600},
+      {name: user.name, email, userId: user.id, time: minutes, jti: randomUUID(), exp: Math.floor(Date.now()/1000) + 3600},
       JWT_SECRET
     )
     res.status(200).json({message: 'Signed in', token})
@@ -54,10 +56,10 @@ router.post('/signin', authRateLimiter, async(req, res) => {
   }
 })
 
-router.post('/signout', authMiddleware, async(req, res) => {
+router.post('/signout', authMiddleware, async(req: any, res) => {
   const remaining = Math.max(0, (req.exp ?? 0) - Math.floor(Date.now()/1000))
-  if (remaining > 0) {
-    await redis.set(`blacklist:${req.userId}`, 'true', 'EX', remaining)
+  if (remaining > 0 && req.jti) {
+    await redis.set(`blacklist:${req.jti}`, 'true', 'EX', remaining)
   }
   res.status(200).json({message: 'Signed out'})
 })
