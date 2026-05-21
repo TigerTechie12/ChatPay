@@ -31,7 +31,7 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (request, 
         return response.json({ received: true })
       }
 
-      const txn = await prisma.onRampTransaction.findUnique({ where: { token } })
+      const txn = await prisma.onRampTransaction.findFirst({ where: { token } })
       if (!txn) {
         console.error('[webhook] No onRampTransaction found for token', token)
         return response.json({ received: true })
@@ -47,14 +47,14 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (request, 
           update: { amount: { increment: amount } }
         }),
         prisma.onRampTransaction.update({
-          where: { token },
+          where: { id: txn.id },
           data: { status: 'COMPLETED' }
         })
       ])
       console.log('[webhook] Credited', amount, 'paise to user', txn.userId)
     }
   } catch (e: any) {
-    console.error('[webhook] processing error', e?.message)
+    console.error('[webhook] processing error | message:', e?.message, '| code:', e?.code, '| meta:', JSON.stringify(e?.meta))
     return response.sendStatus(500)
   }
 
