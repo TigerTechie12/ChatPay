@@ -3,7 +3,7 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/router"
 import axios from "axios"
 import Link from "next/link"
-import { Home, Send, PlusCircle, Building2, MessageSquare, QrCode, Store, ChevronRight, Bell } from "lucide-react"
+import { Home, Send, PlusCircle, Building2, MessageSquare, QrCode, Bell } from "lucide-react"
 
 const API = process.env.NEXT_PUBLIC_USER_BACKEND_URL
 
@@ -71,7 +71,7 @@ export function UserLayout({
 
   return (
     <div className="min-h-screen flex bg-[#f7f7f3]">
-      <aside className="w-64 bg-[#0d1421] text-gray-300 flex flex-col flex-shrink-0">
+      <aside className="w-64 bg-[#0d1421] text-gray-300 flex flex-col shrink-0">
         <div className="p-5 flex items-center gap-3">
           <div className="w-9 h-9 rounded-lg bg-emerald-500 flex items-center justify-center text-white font-bold text-sm">C</div>
           <span className="text-white font-semibold text-lg">ChatPay</span>
@@ -80,13 +80,6 @@ export function UserLayout({
         <nav className="flex-1 px-3 py-4 space-y-6 overflow-y-auto">
           <SidebarGroup label="MONEY" items={MONEY} isActive={isActive} />
           <SidebarGroup label="SOCIAL" items={SOCIAL} isActive={isActive} />
-          <SidebarGroup label="ACCOUNT" items={[]} isActive={isActive}>
-            <Link href="/merchant/overview/page" className="flex items-center gap-3 px-3 py-2 rounded-md text-sm hover:bg-white/5 transition-colors text-gray-400">
-              <Store className="w-4 h-4" />
-              <span className="flex-1">Merchant mode</span>
-              <ChevronRight className="w-4 h-4" />
-            </Link>
-          </SidebarGroup>
         </nav>
 
         {me && (
