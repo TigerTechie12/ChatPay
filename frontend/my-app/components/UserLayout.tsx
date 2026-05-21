@@ -59,9 +59,11 @@ export function UserLayout({
     }
     axios.get(`${API}/api/v1/me`, { headers: { Authorization: `Bearer ${token}` } })
       .then(res => setMe({ name: res.data.name, number: res.data.number }))
-      .catch(() => {
-        localStorage.removeItem("token")
-        router.push("/")
+      .catch((err) => {
+        if (err.response?.status === 401) {
+          localStorage.removeItem("token")
+          router.push("/")
+        }
       })
   }, [])
 
@@ -89,7 +91,7 @@ export function UserLayout({
 
         {me && (
           <div className="p-4 border-t border-white/10 flex items-center gap-3">
-            <div className="w-9 h-9 rounded-full bg-pink-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+            <div className="w-9 h-9 rounded-full bg-pink-500 flex items-center justify-center text-white text-xs font-bold ">
               {getInitials(me.name)}
             </div>
             <div className="min-w-0 flex-1">
