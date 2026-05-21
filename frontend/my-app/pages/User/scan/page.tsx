@@ -1,7 +1,8 @@
 "use client"
 import { useEffect, useRef, useState, useCallback } from "react"
 import axios from "axios"
-import { Bell, Loader2, CheckCircle2, X } from "lucide-react"
+import { Loader2, CheckCircle2, X } from "lucide-react"
+import { UserLayout } from "@/components/UserLayout"
 
 const API = process.env.NEXT_PUBLIC_USER_BACKEND_URL
 
@@ -56,7 +57,7 @@ export function ScanPay() {
     setFetchingMerchant(true)
     try {
       const token = localStorage.getItem("token")
-      const res = await axios.get(`${API}/merchant/${merchantId}`, {
+      const res = await axios.get(`${API}/api/v1/merchant/${merchantId}`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       setMerchant(res.data)
@@ -130,7 +131,7 @@ export function ScanPay() {
     try {
       const token = localStorage.getItem("token")
       await axios.post(
-        `${API}/transfer/merchant`,
+        `${API}/api/v1/transfer/merchant`,
         { amount: amt, merchantId: merchant.id, label: parsed.label },
         { headers: { Authorization: `Bearer ${token}` } }
       )
@@ -157,18 +158,8 @@ export function ScanPay() {
   const payAmount = parseFloat(customAmount) || 0
 
   return (
-    <div className="min-h-screen bg-[#f5f5f0] p-6">
-      <div className="flex items-start justify-between mb-8">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Scan &amp; Pay</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Point your camera at a merchant QR</p>
-        </div>
-        <button className="relative p-2 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 transition-colors">
-          <Bell className="w-5 h-5 text-gray-600" />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full" />
-        </button>
-      </div>
-
+    <UserLayout title="Scan & Pay" subtitle="Point your camera at a merchant QR">
+    <div className="p-6">
       <div className="flex justify-center">
         <div
           className="relative flex-shrink-0"
@@ -344,6 +335,7 @@ export function ScanPay() {
         }
       `}</style>
     </div>
+    </UserLayout>
   )
 }
 

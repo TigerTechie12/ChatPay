@@ -1,7 +1,8 @@
 "use client"
 import { useState, useEffect } from "react"
 import axios from "axios"
-import { Bell, Loader2, Pencil } from "lucide-react"
+import { Loader2, Pencil } from "lucide-react"
+import { UserLayout } from "@/components/UserLayout"
 
 const API = process.env.NEXT_PUBLIC_USER_BACKEND_URL
 
@@ -67,8 +68,8 @@ export function Withdraw() {
     const token = localStorage.getItem("token")
     const headers = { Authorization: `Bearer ${token}` }
     Promise.all([
-      axios.get(`${API}/api/balance`, { headers }),
-      axios.get(`${API}/transactions`, { headers }),
+      axios.get(`${API}/api/v1/api/balance`, { headers }),
+      axios.get(`${API}/api/v1/transactions`, { headers }),
     ])
       .then(([balRes, txRes]) => {
         const bal = balRes.data.balance ?? 0
@@ -99,7 +100,7 @@ export function Withdraw() {
     try {
       const token = localStorage.getItem("token")
       const res = await axios.post(
-        `${API}/offramp`,
+        `${API}/api/v1/offramp`,
         { amount: numericAmount, accountNumber: account.accountNumber, ifscCode: account.ifscCode },
         { headers: { Authorization: `Bearer ${token}` } }
       )
@@ -118,18 +119,8 @@ export function Withdraw() {
     : ""
 
   return (
-    <div className="min-h-screen bg-[#f5f5f0] p-6">
-      <div className="flex items-start justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Withdraw to bank</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Funds settle in your linked account within 2–4 hours.</p>
-        </div>
-        <button className="relative p-2 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 transition-colors">
-          <Bell className="w-5 h-5 text-gray-600" />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full" />
-        </button>
-      </div>
-
+    <UserLayout title="Withdraw to bank" subtitle="Funds settle in your linked account within 2–4 hours.">
+    <div className="p-6">
       {successId !== null && (
         <div className="mb-4 px-5 py-4 bg-green-50 border border-green-200 rounded-xl flex items-center justify-between">
           <div>
@@ -328,6 +319,7 @@ export function Withdraw() {
         </table>
       </div>
     </div>
+    </UserLayout>
   )
 }
 

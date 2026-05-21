@@ -1,7 +1,8 @@
 "use client"
 import { useState } from "react"
 import axios from "axios"
-import { Bell, Loader2 } from "lucide-react"
+import { Loader2 } from "lucide-react"
+import { UserLayout } from "@/components/UserLayout"
 
 const API = process.env.NEXT_PUBLIC_USER_BACKEND_URL
 
@@ -39,7 +40,7 @@ export function AddMoney() {
     try {
       const token = localStorage.getItem("token")
       const res = await axios.post(
-        `${API}/onramp`,
+        `${API}/api/v1/onramp`,
         { amount: numericAmount },
         { headers: { Authorization: `Bearer ${token}` } }
       )
@@ -56,18 +57,8 @@ export function AddMoney() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f5f5f0] p-6">
-      <div className="flex items-start justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Add money</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Top up your ChatPay wallet from any bank.</p>
-        </div>
-        <button className="relative p-2 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 transition-colors">
-          <Bell className="w-5 h-5 text-gray-600" />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full" />
-        </button>
-      </div>
-
+    <UserLayout title="Add money" subtitle="Top up your ChatPay wallet from any bank.">
+    <div className="p-6">
       <div className="bg-white rounded-2xl border border-gray-200 p-8 max-w-4xl">
 
         <div className="mb-8">
@@ -156,6 +147,7 @@ export function AddMoney() {
         </p>
       </div>
     </div>
+    </UserLayout>
   )
 }
 

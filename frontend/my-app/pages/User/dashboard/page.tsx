@@ -203,13 +203,13 @@ export function Dashboard() {
             <div className="text-sm text-gray-400 mt-1">Total {formatAmount(balance)}</div>
           </div>
           <div className="flex gap-3">
-            <button className="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+            <button onClick={() => router.push("/User/AddMoney/page")} className="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
               <PlusCircle className="w-4 h-4" /> Add money
             </button>
-            <button className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+            <button onClick={() => router.push("/User/Withdraw/page")} className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
               <Building2 className="w-4 h-4" /> Withdraw
             </button>
-            <button className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+            <button onClick={() => router.push("/User/scan/page")} className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
               <QrCode className="w-4 h-4" /> Scan
             </button>
           </div>
