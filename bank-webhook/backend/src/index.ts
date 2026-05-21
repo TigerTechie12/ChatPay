@@ -8,41 +8,53 @@ const app = express()
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL })
 const prisma = new PrismaClient({ adapter })
 
-app.post('/webhook', express.raw({type: 'application/json'}), async(request, response) => {
-  {let event = request.body
+app.post('/webhook', express.raw({ type: 'application/json' }), async (request, response) => {
+  let event = request.body
   if (endpointSecret) {
     const signature = request.headers['stripe-signature']
     try {
-      event = stripe.webhooks.constructEvent(
-        request.body,
-        signature,
-        endpointSecret
-      )
-} catch (err:any) {
-      console.log(` Webhook signature verification failed.`, err.message)
+      event = stripe.webhooks.constructEvent(request.body, signature, endpointSecret)
+    } catch (err: any) {
+      console.error('Webhook signature verification failed.', err.message)
       return response.sendStatus(400)
     }
-
   }
- if(event.type==="checkout.session.completed"){
-        const session=event.data.object
-const token=session.metadata?.token
-const amount=session.amount_total
-const id=await prisma.onRampTransaction.findUnique({where:{token:token}})
-    const [balanceUpdate,onRampTransaction]=await prisma.$transaction([
-        prisma.balance.update({
- where:{userId:id.userId},
- data:{amount:{increment:amount}}
+
+  try {
+    if (event.type === 'checkout.session.completed') {
+      const session = event.data.object
+      const token = session.metadata?.token
+      const amount = session.amount_total
+
+      const txn = await prisma.onRampTransaction.findUnique({ where: { token } })
+      if (!txn) {
+        console.error('[webhook] No onRampTransaction found for token', token)
+        return response.json({ received: true })
+      }
+      if (txn.status === 'COMPLETED') {
+        return response.json({ received: true })
+      }
+
+      await prisma.$transaction([
+        prisma.balance.upsert({
+          where: { userId: txn.userId },
+          create: { userId: txn.userId, amount: amount, locked: 0 },
+          update: { amount: { increment: amount } }
         }),
-prisma.onRampTransaction.update({where:{token:token},
-data:{status:'COMPLETED'}})
-
-    ])
-
-
+        prisma.onRampTransaction.update({
+          where: { token },
+          data: { status: 'COMPLETED' }
+        })
+      ])
+      console.log('[webhook] Credited', amount, 'paise to user', txn.userId)
     }
+  } catch (e: any) {
+    console.error('[webhook] processing error', e?.message)
+    return response.sendStatus(500)
+  }
 
+  return response.json({ received: true })
+})
 
-}})
-
-app.listen(4242, () => console.log('Running on port 4242'))
+const PORT = process.env.PORT ? Number(process.env.PORT) : 4242
+app.listen(PORT, () => console.log(`Webhook listening on port ${PORT}`))
