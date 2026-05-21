@@ -17,9 +17,9 @@ if(!token){
     return
 }
 
-let ifUser:{userId:string,exp:number,time:number}
+let ifUser:{userId:string,exp:number,time:number,jti?:string}
 try{
-    ifUser=jwt.verify(token,JWT_SECRET) as {userId:string,exp:number,time:number}
+    ifUser=jwt.verify(token,JWT_SECRET) as {userId:string,exp:number,time:number,jti?:string}
 }catch{
     res.status(401).json({message:"Unauthorized"})
     return
@@ -27,9 +27,12 @@ try{
 req.userId=ifUser.userId
 req.time=ifUser.time
 req.exp=ifUser.exp
+;(req as any).jti=ifUser.jti
 try{
-   const checkCache=await redis.get(`blacklist:${ifUser.userId}`)
-   if(checkCache){res.status(401).json({message:"Unauthorized"}); return}
+   if(ifUser.jti){
+     const checkCache=await redis.get(`blacklist:${ifUser.jti}`)
+     if(checkCache){res.status(401).json({message:"Unauthorized"}); return}
+   }
 }catch{
 }
 next()}

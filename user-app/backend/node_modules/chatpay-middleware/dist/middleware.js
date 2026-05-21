@@ -31,11 +31,14 @@ async function authMiddleware(req, res, next) {
     req.userId = ifUser.userId;
     req.time = ifUser.time;
     req.exp = ifUser.exp;
+    req.jti = ifUser.jti;
     try {
-        const checkCache = await redis.get(`blacklist:${ifUser.userId}`);
-        if (checkCache) {
-            res.status(401).json({ message: "Unauthorized" });
-            return;
+        if (ifUser.jti) {
+            const checkCache = await redis.get(`blacklist:${ifUser.jti}`);
+            if (checkCache) {
+                res.status(401).json({ message: "Unauthorized" });
+                return;
+            }
         }
     }
     catch {
