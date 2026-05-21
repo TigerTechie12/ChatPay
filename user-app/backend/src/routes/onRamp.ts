@@ -19,32 +19,37 @@ userRouter.post('/onramp', authMiddleware, async (req, res) => {
 
     const id = req.userId as any
 
-    const dbData = await prisma.onRampTransaction.create({
-        data: {
-            startedAt: new Date(),
-            amount: amount * 100,
-            token: token,
-            status: "PENDING",
-            userId: id
-        }
-    })
+    try {
+        const dbData = await prisma.onRampTransaction.create({
+            data: {
+                startedAt: new Date(),
+                amount: amount * 100,
+                token: token,
+                status: "PENDING",
+                userId: id
+            }
+        })
 
-    const session = await stripe.checkout.sessions.create({
-        success_url: 'http://localhost:3000/dashboard?status=success',
-        cancel_url: 'http://localhost:3000/dashboard?status=cancelled',
-        line_items: [{
-            price_data: {
-                currency: 'inr',
-                product_data: { name: 'ChatPay Wallet Top-up' },
-                unit_amount: amount * 100,
-            },
-            quantity: 1,
-        }],
-        mode: 'payment',
-        metadata: { token: token },
-    })
+        const session = await stripe.checkout.sessions.create({
+            success_url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/User/dashboard/page?status=success`,
+            cancel_url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/User/dashboard/page?status=cancelled`,
+            line_items: [{
+                price_data: {
+                    currency: 'inr',
+                    product_data: { name: 'ChatPay Wallet Top-up' },
+                    unit_amount: amount * 100,
+                },
+                quantity: 1,
+            }],
+            mode: 'payment',
+            metadata: { token: token },
+        })
 
-    return res.status(200).json({ message: "Onramp transaction created", data: dbData, token: token, url: session.url })
+        return res.status(200).json({ message: "Onramp transaction created", data: dbData, token: token, url: session.url })
+    } catch (e: any) {
+        console.error('[onramp error]', e?.message, e?.type, e?.code)
+        return res.status(500).json({ message: "Error creating onramp session", error: e?.message })
+    }
 })
 
 userRouter.get('/api/balance',authMiddleware,async(req:any,res:any)=>{

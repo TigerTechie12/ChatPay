@@ -1,1 +1,1 @@
-{"root":["./src/index.ts","./src/lib/queue.ts","./src/lib/ratelimiter.ts","./src/routes/auth.ts","./src/routes/offramp.ts","./src/routes/onramp.ts","./src/routes/p2m.ts","./src/routes/p2pb.ts","./src/routes/p2pw.ts","./src/types/express.d.ts"],"version":"6.0.3"}
+{"root":["./src/index.ts","./src/lib/queue.ts","./src/lib/ratelimiter.ts","./src/lib/redis.ts","./src/routes/auth.ts","./src/routes/offramp.ts","./src/routes/onramp.ts","./src/routes/p2m.ts","./src/routes/p2pb.ts","./src/routes/p2pw.ts","./src/types/express.d.ts"],"version":"6.0.3"}

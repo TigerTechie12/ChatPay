@@ -11,11 +11,10 @@ const chatpay_middleware_1 = require("chatpay-middleware");
 const shreyash_chatpay_common_1 = require("shreyash-chatpay-common");
 const rateLimiter_1 = require("../lib/rateLimiter");
 const queue_1 = require("../lib/queue");
-const ioredis_1 = __importDefault(require("ioredis"));
+const redis_1 = __importDefault(require("../lib/redis"));
 const adapter = new adapter_pg_1.PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new chatpay_db_1.PrismaClient({ adapter });
 exports.p2pBRouter = (0, express_1.Router)();
-const redis = new ioredis_1.default(process.env.REDIS_URL || 'redis://localhost:6379', { maxRetriesPerRequest: null });
 const bankLimiter = (0, rateLimiter_1.rateLimitMiddleware)('p2p-bank', 3, 60);
 exports.p2pBRouter.post('/payAtBank', chatpay_middleware_1.authMiddleware, bankLimiter, async (req, res) => {
     const parsed = shreyash_chatpay_common_1.p2pBSchema.safeParse(req.body);
@@ -35,7 +34,7 @@ exports.p2pBRouter.post('/payAtBank', chatpay_middleware_1.authMiddleware, bankL
         await prisma.$transaction(async (txn) => {
             await txn.$queryRaw `SELECT * FROM "Balance" WHERE "userId"=${userId} FOR UPDATE`;
             await txn.balance.update({ where: { userId }, data: { locked: { increment: amountInPaise } } });
-            await redis.del(cacheKey);
+            await redis_1.default.del(cacheKey);
             const offRampTxn = await txn.offRampTransaction.create({ data: {
                     amount: amountInPaise,
                     accountNumber,

@@ -5,6 +5,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
+console.log('[startup] REDIS_URL is:', process.env.REDIS_URL ? 'SET (' + process.env.REDIS_URL.substring(0, 30) + '...)' : 'UNDEFINED');
+console.log('[startup] DATABASE_URL is:', process.env.DATABASE_URL ? 'SET' : 'UNDEFINED');
+console.log('[startup] JWT_SECRET is:', process.env.JWT_SECRET ? 'SET' : 'UNDEFINED');
 const app = (0, express_1.default)();
 const auth_1 = require("./routes/auth");
 const onRamp_1 = require("./routes/onRamp");

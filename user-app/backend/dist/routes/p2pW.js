@@ -10,11 +10,10 @@ const adapter_pg_1 = require("@prisma/adapter-pg");
 const chatpay_middleware_1 = require("chatpay-middleware");
 const shreyash_chatpay_common_1 = require("shreyash-chatpay-common");
 const rateLimiter_1 = require("../lib/rateLimiter");
-const ioredis_1 = __importDefault(require("ioredis"));
+const redis_1 = __importDefault(require("../lib/redis"));
 const adapter = new adapter_pg_1.PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new chatpay_db_1.PrismaClient({ adapter });
 exports.walletPayRouter = (0, express_1.Router)();
-const redis = new ioredis_1.default(process.env.REDIS_URL || 'redis://localhost:6379', { maxRetriesPerRequest: null });
 const walletLimiter = (0, rateLimiter_1.rateLimitMiddleware)('p2p-wallet', 10, 60);
 exports.walletPayRouter.post('/payAtWallet', chatpay_middleware_1.authMiddleware, walletLimiter, async (req, res) => {
     const parsed = shreyash_chatpay_common_1.p2pWSchema.safeParse(req.body);
@@ -44,7 +43,7 @@ exports.walletPayRouter.post('/payAtWallet', chatpay_middleware_1.authMiddleware
                     timestamp: new Date()
                 } });
         });
-        await redis.del(`profile:${userId}`);
+        await redis_1.default.del(`profile:${userId}`);
         return res.status(200).json({ message: "Payment Successful" });
     }
     catch (e) {

@@ -10,12 +10,11 @@ const chatpay_db_1 = require("chatpay-db");
 const adapter_pg_1 = require("@prisma/adapter-pg");
 const shreyash_chatpay_common_1 = require("shreyash-chatpay-common");
 const chatpay_middleware_1 = require("chatpay-middleware");
-const ioredis_1 = __importDefault(require("ioredis"));
+const redis_1 = __importDefault(require("../lib/redis"));
 const adapter = new adapter_pg_1.PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new chatpay_db_1.PrismaClient({ adapter });
 const stripe = new stripe_1.default(process.env.STRIPE_SECRET_KEY || '');
 exports.userRouter = (0, express_1.Router)();
-const redis = new ioredis_1.default(process.env.REDIS_URL || 'redis://localhost:6379', { maxRetriesPerRequest: null });
 const onRampInput = shreyash_chatpay_common_1.OnRampSchema.pick({ amount: true });
 exports.userRouter.post('/onramp', chatpay_middleware_1.authMiddleware, async (req, res) => {
     const parsed = onRampInput.safeParse(req.body);
@@ -24,36 +23,42 @@ exports.userRouter.post('/onramp', chatpay_middleware_1.authMiddleware, async (r
     const { amount } = parsed.data;
     const token = JSON.stringify(Math.floor(Math.random() * 1000000) + "xacdcdcddq" + Math.floor(Math.random() * 1000000) + "wertyuio");
     const id = req.userId;
-    const dbData = await prisma.onRampTransaction.create({
-        data: {
-            startedAt: new Date(),
-            amount: amount * 100,
-            token: token,
-            status: "PENDING",
-            userId: id
-        }
-    });
-    const session = await stripe.checkout.sessions.create({
-        success_url: 'http://localhost:3000/dashboard?status=success',
-        cancel_url: 'http://localhost:3000/dashboard?status=cancelled',
-        line_items: [{
-                price_data: {
-                    currency: 'inr',
-                    product_data: { name: 'ChatPay Wallet Top-up' },
-                    unit_amount: amount * 100,
-                },
-                quantity: 1,
-            }],
-        mode: 'payment',
-        metadata: { token: token },
-    });
-    return res.status(200).json({ message: "Onramp transaction created", data: dbData, token: token, url: session.url });
+    try {
+        const dbData = await prisma.onRampTransaction.create({
+            data: {
+                startedAt: new Date(),
+                amount: amount * 100,
+                token: token,
+                status: "PENDING",
+                userId: id
+            }
+        });
+        const session = await stripe.checkout.sessions.create({
+            success_url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/User/dashboard/page?status=success`,
+            cancel_url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/User/dashboard/page?status=cancelled`,
+            line_items: [{
+                    price_data: {
+                        currency: 'inr',
+                        product_data: { name: 'ChatPay Wallet Top-up' },
+                        unit_amount: amount * 100,
+                    },
+                    quantity: 1,
+                }],
+            mode: 'payment',
+            metadata: { token: token },
+        });
+        return res.status(200).json({ message: "Onramp transaction created", data: dbData, token: token, url: session.url });
+    }
+    catch (e) {
+        console.error('[onramp error]', e?.message, e?.type, e?.code);
+        return res.status(500).json({ message: "Error creating onramp session", error: e?.message });
+    }
 });
 exports.userRouter.get('/api/balance', chatpay_middleware_1.authMiddleware, async (req, res) => {
     const userId = req.userId;
     const cacheKey = `profile:${userId}`;
     try {
-        const cachedBalance = await redis.get(cacheKey);
+        const cachedBalance = await redis_1.default.get(cacheKey);
         if (cachedBalance) {
             const parsed = JSON.parse(cachedBalance);
             return res.json({ ...parsed, source: 'cache' });
@@ -61,7 +66,7 @@ exports.userRouter.get('/api/balance', chatpay_middleware_1.authMiddleware, asyn
         const dbData = await prisma.balance.findUnique({ where: { userId: userId } });
         if (dbData) {
             const payload = { balance: dbData.amount, locked: dbData.locked };
-            await redis.set(cacheKey, JSON.stringify(payload), 'EX', 30);
+            await redis_1.default.set(cacheKey, JSON.stringify(payload), 'EX', 30);
             return res.status(200).json(payload);
         }
         return res.status(404).json({ message: "Balance not found" });

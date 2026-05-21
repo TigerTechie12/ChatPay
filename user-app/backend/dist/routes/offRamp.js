@@ -11,11 +11,10 @@ const adapter_pg_1 = require("@prisma/adapter-pg");
 const chatpay_middleware_1 = require("chatpay-middleware");
 const queue_1 = require("../lib/queue");
 const rateLimiter_1 = require("../lib/rateLimiter");
-const ioredis_1 = __importDefault(require("ioredis"));
+const redis_1 = __importDefault(require("../lib/redis"));
 const zod_1 = __importDefault(require("zod"));
 const adapter = new adapter_pg_1.PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new chatpay_db_1.PrismaClient({ adapter });
-const redis = new ioredis_1.default(process.env.REDIS_URL || 'redis://localhost:6379', { maxRetriesPerRequest: null });
 exports.offRampRouter = (0, express_2.Router)();
 exports.offRampRouter.use(express_1.default.json());
 const offRampInput = zod_1.default.object({
@@ -43,7 +42,7 @@ exports.offRampRouter.post("/offramp", chatpay_middleware_1.authMiddleware, offR
             if (availableBalance < amount * 100)
                 throw new Error('Insufficient Balance');
             await txn.balance.update({ where: { userId }, data: { locked: { increment: amount * 100 } } });
-            await redis.del(cacheKey);
+            await redis_1.default.del(cacheKey);
             const offRampTxn = await txn.offRampTransaction.create({ data: {
                     status: 'QUEUED',
                     amount: amount * 100,
