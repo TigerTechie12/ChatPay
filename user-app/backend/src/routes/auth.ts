@@ -3,6 +3,7 @@ import { PrismaClient } from 'chatpay-db'
 import { PrismaPg } from '@prisma/adapter-pg'
 import { UserSchema } from 'shreyash-chatpay-common'
 import jwt from 'jsonwebtoken'
+import bcrypt from 'bcryptjs'
 import redis from '../lib/redis'
 import { authMiddleware } from 'chatpay-middleware'
 import { rateLimitMiddleware } from '../lib/rateLimiter'
@@ -25,7 +26,8 @@ router.post('/signup', authRateLimiter, async(req, res) => {
   try {
     const userExists = await prisma.user.findFirst({where: {OR: [{email}, {number: numberBig}]}})
     if (userExists) return res.status(409).json({message: 'User already exists'})
-    await prisma.user.create({data: {name, email, password, number: numberBig}})
+    const hashedPassword = await bcrypt.hash(password, 10)
+    await prisma.user.create({data: {name, email, password: hashedPassword, number: numberBig}})
     res.status(201).json({message: 'User created'})
   } catch(e: any) {
     console.error('[signup error]', e?.message, e?.code, e?.meta)
@@ -39,7 +41,8 @@ router.post('/signin', authRateLimiter, async(req, res) => {
   try {
     const user: any = await prisma.user.findUnique({where: {email}})
     if (!user) return res.status(404).json({message: 'User not found'})
-    if (user.password !== password) return res.status(401).json({message: 'Invalid credentials'})
+    const passwordMatch = await bcrypt.compare(password, user.password)
+    if (!passwordMatch) return res.status(401).json({message: 'Invalid credentials'})
     const minutes = new Date().getMinutes()
     const token = jwt.sign(
       {name: user.name, email, userId: user.id, time: minutes, exp: Math.floor(Date.now()/1000) + 3600},
