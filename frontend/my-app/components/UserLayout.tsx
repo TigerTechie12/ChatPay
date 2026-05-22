@@ -75,17 +75,6 @@ export function UserLayout({
       })
   }, [])
 
-  if (!authChecked) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#f7f7f3]">
-        <div className="flex items-center gap-3 text-gray-400">
-          <span className="w-4 h-4 rounded-full border-2 border-gray-300 border-t-gray-500 animate-spin" />
-          <span className="text-sm">Loading…</span>
-        </div>
-      </div>
-    )
-  }
-
   const [notifications, setNotifications] = useState<any[]>([])
   const [unread, setUnread] = useState(0)
   const [showNotifs, setShowNotifs] = useState(false)
@@ -142,6 +131,17 @@ export function UserLayout({
   }
 
   const isActive = (href: string) => router.pathname === href || router.asPath === href
+
+  if (!authChecked) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#f7f7f3]">
+        <div className="flex items-center gap-3 text-gray-400">
+          <span className="w-4 h-4 rounded-full border-2 border-gray-300 border-t-gray-500 animate-spin" />
+          <span className="text-sm">Loading…</span>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen flex bg-[#f7f7f3]">
