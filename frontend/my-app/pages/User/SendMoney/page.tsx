@@ -23,12 +23,14 @@ function formatPhone(number: string) {
 type Recipient = { id: number; name: string; number: string }
 
 export function SendMoney() {
+  const [mode, setMode] = useState<"wallet" | "bank">("wallet")
   const [amount, setAmount] = useState("0")
   const [note, setNote] = useState("")
   const [query, setQuery] = useState("")
   const [results, setResults] = useState<Recipient[]>([])
   const [searching, setSearching] = useState(false)
   const [selected, setSelected] = useState<Recipient | null>(null)
+  const [bank, setBank] = useState({ accountNumber: "", ifscCode: "" })
   const [availableBalance, setAvailableBalance] = useState(0)
   const [sending, setSending] = useState(false)
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null)
@@ -72,19 +74,28 @@ export function SendMoney() {
 
   async function handleSend() {
     setMessage(null)
-    if (!selected) { setMessage({ type: "error", text: "Select a recipient first" }); return }
     if (numericAmount <= 0) { setMessage({ type: "error", text: "Enter an amount" }); return }
     if (numericAmount > availableINR) { setMessage({ type: "error", text: "Insufficient balance" }); return }
+
+    const token = localStorage.getItem("token")
+    const headers = { Authorization: `Bearer ${token}` }
     setSending(true)
     try {
-      const token = localStorage.getItem("token")
-      await axios.post(`${API}/api/v1/payAtWallet`,
-        { phoneNumber: Number(selected.number), amount: numericAmount },
-        { headers: { Authorization: `Bearer ${token}` } })
-      setMessage({ type: "success", text: `Sent ₹${numericAmount.toLocaleString("en-IN")} to ${selected.name}` })
+      if (mode === "wallet") {
+        if (!selected) { setMessage({ type: "error", text: "Select a recipient first" }); setSending(false); return }
+        await axios.post(`${API}/api/v1/payAtWallet`,
+          { phoneNumber: Number(selected.number), amount: numericAmount }, { headers })
+        setMessage({ type: "success", text: `Sent ₹${numericAmount.toLocaleString("en-IN")} to ${selected.name}` })
+        setSelected(null)
+        setQuery("")
+      } else {
+        if (!bank.accountNumber || !bank.ifscCode) { setMessage({ type: "error", text: "Enter account number and IFSC" }); setSending(false); return }
+        await axios.post(`${API}/api/v1/payAtBank`,
+          { amount: numericAmount, accountNumber: bank.accountNumber, ifscCode: bank.ifscCode.toUpperCase() }, { headers })
+        setMessage({ type: "success", text: `Bank transfer of ₹${numericAmount.toLocaleString("en-IN")} initiated` })
+        setBank({ accountNumber: "", ifscCode: "" })
+      }
       setAmount("0")
-      setSelected(null)
-      setQuery("")
       setAvailableBalance(prev => prev - numericAmount * 100)
     } catch (e: any) {
       setMessage({ type: "error", text: e.response?.data?.message ?? "Payment failed" })
@@ -103,46 +114,91 @@ export function SendMoney() {
     <div className="p-6 grid grid-cols-2 gap-5 max-w-5xl">
 
       <div className="bg-white rounded-2xl border border-gray-200 p-6">
-        <h2 className="text-base font-semibold text-gray-900 mb-4">Recipient</h2>
-        <div className="flex items-center gap-2 border border-gray-200 rounded-xl px-4 py-2.5 mb-4 focus-within:border-gray-400 transition-colors">
-          <Search className="w-4 h-4 text-gray-400" />
-          <input
-            value={query}
-            onChange={e => setQuery(e.target.value)}
-            placeholder="Search by phone or name"
-            className="flex-1 text-sm outline-none bg-transparent"
-          />
-          {searching && <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />}
-        </div>
-
-        <div className="divide-y divide-gray-100">
-          {selected ? (
-            <div className="flex items-center gap-3 py-3">
-              <div className={`w-10 h-10 rounded-full ${avatarColor(selected.name)} flex items-center justify-center text-white text-sm font-bold`}>
-                {getInitials(selected.name)}
-              </div>
-              <div className="flex-1">
-                <div className="text-sm font-semibold text-gray-900">{selected.name}</div>
-                <div className="text-xs text-gray-400">{formatPhone(selected.number)}</div>
-              </div>
-              <button onClick={() => setSelected(null)} className="text-xs text-gray-500 hover:text-gray-800">Change</button>
-            </div>
-          ) : query.trim().length < 2 ? (
-            <div className="py-10 text-center text-sm text-gray-400">Search for someone to pay</div>
-          ) : results.length === 0 && !searching ? (
-            <div className="py-10 text-center text-sm text-gray-400">No users found</div>
-          ) : results.map(r => (
-            <button key={r.id} onClick={() => setSelected(r)} className="w-full flex items-center gap-3 py-3 hover:bg-gray-50 transition-colors text-left">
-              <div className={`w-10 h-10 rounded-full ${avatarColor(r.name)} flex items-center justify-center text-white text-sm font-bold`}>
-                {getInitials(r.name)}
-              </div>
-              <div className="flex-1">
-                <div className="text-sm font-semibold text-gray-900">{r.name}</div>
-                <div className="text-xs text-gray-400">{formatPhone(r.number)}</div>
-              </div>
+        <div className="flex gap-1 bg-gray-100 rounded-lg p-1 mb-5">
+          {(["wallet", "bank"] as const).map(m => (
+            <button
+              key={m}
+              onClick={() => { setMode(m); setMessage(null) }}
+              className={`flex-1 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                mode === m ? "bg-white shadow-sm text-gray-900" : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              {m === "wallet" ? "To wallet" : "To bank account"}
             </button>
           ))}
         </div>
+
+        {mode === "wallet" ? (
+          <>
+            <h2 className="text-base font-semibold text-gray-900 mb-4">Recipient</h2>
+            <div className="flex items-center gap-2 border border-gray-200 rounded-xl px-4 py-2.5 mb-4 focus-within:border-gray-400 transition-colors">
+              <Search className="w-4 h-4 text-gray-400" />
+              <input
+                value={query}
+                onChange={e => setQuery(e.target.value)}
+                placeholder="Search by phone or name"
+                className="flex-1 text-sm outline-none bg-transparent"
+              />
+              {searching && <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />}
+            </div>
+
+            <div className="divide-y divide-gray-100">
+              {selected ? (
+                <div className="flex items-center gap-3 py-3">
+                  <div className={`w-10 h-10 rounded-full ${avatarColor(selected.name)} flex items-center justify-center text-white text-sm font-bold`}>
+                    {getInitials(selected.name)}
+                  </div>
+                  <div className="flex-1">
+                    <div className="text-sm font-semibold text-gray-900">{selected.name}</div>
+                    <div className="text-xs text-gray-400">{formatPhone(selected.number)}</div>
+                  </div>
+                  <button onClick={() => setSelected(null)} className="text-xs text-gray-500 hover:text-gray-800">Change</button>
+                </div>
+              ) : query.trim().length < 2 ? (
+                <div className="py-10 text-center text-sm text-gray-400">Search for someone to pay</div>
+              ) : results.length === 0 && !searching ? (
+                <div className="py-10 text-center text-sm text-gray-400">No users found</div>
+              ) : results.map(r => (
+                <button key={r.id} onClick={() => setSelected(r)} className="w-full flex items-center gap-3 py-3 hover:bg-gray-50 transition-colors text-left">
+                  <div className={`w-10 h-10 rounded-full ${avatarColor(r.name)} flex items-center justify-center text-white text-sm font-bold`}>
+                    {getInitials(r.name)}
+                  </div>
+                  <div className="flex-1">
+                    <div className="text-sm font-semibold text-gray-900">{r.name}</div>
+                    <div className="text-xs text-gray-400">{formatPhone(r.number)}</div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </>
+        ) : (
+          <>
+            <h2 className="text-base font-semibold text-gray-900 mb-1">Bank account</h2>
+            <p className="text-sm text-gray-400 mb-4">Send to anyone — they don't need a ChatPay wallet.</p>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">Account number</label>
+                <input
+                  value={bank.accountNumber}
+                  onChange={e => setBank(b => ({ ...b, accountNumber: e.target.value }))}
+                  placeholder="Recipient's bank account number"
+                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-mono outline-none focus:border-gray-400 transition-colors"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">IFSC code</label>
+                <input
+                  value={bank.ifscCode}
+                  onChange={e => setBank(b => ({ ...b, ifscCode: e.target.value.toUpperCase() }))}
+                  placeholder="e.g. HDFC0001234"
+                  maxLength={11}
+                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-mono uppercase outline-none focus:border-gray-400 transition-colors"
+                />
+              </div>
+              <p className="text-xs text-gray-400">Settles via NEFT/IMPS · 2–4 hours · queued through the withdrawal pipeline.</p>
+            </div>
+          </>
+        )}
       </div>
 
       <div className="bg-white rounded-2xl border border-gray-200 p-6">
@@ -181,11 +237,13 @@ export function SendMoney() {
 
         <button
           onClick={handleSend}
-          disabled={sending || !selected || numericAmount <= 0}
+          disabled={sending || numericAmount <= 0 || (mode === "wallet" ? !selected : (!bank.accountNumber || !bank.ifscCode))}
           className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-4 rounded-xl flex items-center justify-center gap-2 transition-colors"
         >
           {sending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
-          {selected ? `Pay ${selected.name}` : "Select recipient"}
+          {mode === "wallet"
+            ? (selected ? `Pay ${selected.name}` : "Select recipient")
+            : "Send to bank"}
         </button>
       </div>
     </div>

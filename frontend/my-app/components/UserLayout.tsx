@@ -1,9 +1,9 @@
 "use client"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { useRouter } from "next/router"
 import axios from "axios"
 import Link from "next/link"
-import { Home, Send, PlusCircle, Building2, MessageSquare, QrCode, Bell } from "lucide-react"
+import { Home, Send, PlusCircle, Building2, MessageSquare, QrCode, Bell, LogOut, ArrowDownLeft } from "lucide-react"
 
 const API = process.env.NEXT_PUBLIC_USER_BACKEND_URL
 
@@ -50,22 +50,96 @@ export function UserLayout({
 }) {
   const router = useRouter()
   const [me, setMe] = useState<{ name: string; number: string | null } | null>(null)
+  const [authChecked, setAuthChecked] = useState(false)
 
   useEffect(() => {
     const token = typeof window !== "undefined" ? localStorage.getItem("token") : null
     if (!token) {
-      router.push("/")
+      router.replace("/")
       return
     }
     axios.get(`${API}/api/v1/me`, { headers: { Authorization: `Bearer ${token}` } })
-      .then(res => setMe({ name: res.data.name, number: res.data.number }))
+      .then(res => {
+        setMe({ name: res.data.name, number: res.data.number })
+        setAuthChecked(true)
+      })
       .catch((err) => {
         if (err.response?.status === 401) {
+          // invalid/expired token — kick back to login
           localStorage.removeItem("token")
-          router.push("/")
+          router.replace("/")
+        } else {
+          // transient backend error (cold start / network) — token exists, render anyway
+          setAuthChecked(true)
         }
       })
   }, [])
+
+  if (!authChecked) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#f7f7f3]">
+        <div className="flex items-center gap-3 text-gray-400">
+          <span className="w-4 h-4 rounded-full border-2 border-gray-300 border-t-gray-500 animate-spin" />
+          <span className="text-sm">Loading…</span>
+        </div>
+      </div>
+    )
+  }
+
+  const [notifications, setNotifications] = useState<any[]>([])
+  const [unread, setUnread] = useState(0)
+  const [showNotifs, setShowNotifs] = useState(false)
+  const lastSeenRef = useRef<number>(0)
+  const initializedRef = useRef(false)
+
+  useEffect(() => {
+    if (!authChecked) return
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null
+    if (!token) return
+    lastSeenRef.current = Number(localStorage.getItem("notif_last_seen") ?? 0)
+
+    async function poll() {
+      try {
+        const res = await axios.get(`${API}/api/v1/transactions`, { headers: { Authorization: `Bearer ${token}` } })
+        const credits = (res.data.transactions ?? [])
+          .filter((t: any) => t.direction === "credit")
+          .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        setNotifications(credits.slice(0, 10))
+        if (!initializedRef.current) {
+          // first load — baseline, don't flag historical as unread
+          lastSeenRef.current = credits.length ? new Date(credits[0].date).getTime() : Date.now()
+          localStorage.setItem("notif_last_seen", String(lastSeenRef.current))
+          initializedRef.current = true
+          return
+        }
+        const newCount = credits.filter((t: any) => new Date(t.date).getTime() > lastSeenRef.current).length
+        if (newCount > 0) setUnread(newCount)
+      } catch { /* ignore poll errors */ }
+    }
+
+    poll()
+    const interval = setInterval(poll, 15000)
+    return () => clearInterval(interval)
+  }, [authChecked])
+
+  function openNotifications() {
+    setShowNotifs(v => !v)
+    if (!showNotifs && notifications.length) {
+      const newest = new Date(notifications[0].date).getTime()
+      lastSeenRef.current = newest
+      localStorage.setItem("notif_last_seen", String(newest))
+      setUnread(0)
+    }
+  }
+
+  async function handleSignout() {
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null
+    try {
+      await axios.post(`${API}/api/v1/signout`, {}, { headers: { Authorization: `Bearer ${token}` } })
+    } catch { /* sign out locally regardless */ }
+    localStorage.removeItem("token")
+    router.push("/")
+  }
 
   const isActive = (href: string) => router.pathname === href || router.asPath === href
 
@@ -84,13 +158,20 @@ export function UserLayout({
 
         {me && (
           <div className="p-4 border-t border-white/10 flex items-center gap-3">
-            <div className="w-9 h-9 rounded-full bg-pink-500 flex items-center justify-center text-white text-xs font-bold ">
+            <div className="w-9 h-9 rounded-full bg-pink-500 flex items-center justify-center text-white text-xs font-bold">
               {getInitials(me.name)}
             </div>
             <div className="min-w-0 flex-1">
               <div className="text-sm font-medium text-white truncate">{me.name}</div>
               <div className="text-xs text-gray-400 truncate">{formatPhone(me.number)}</div>
             </div>
+            <button
+              onClick={handleSignout}
+              title="Sign out"
+              className="w-8 h-8 rounded-md flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 transition-colors flex-shrink-0"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
           </div>
         )}
       </aside>
@@ -103,10 +184,40 @@ export function UserLayout({
           </div>
           <div className="flex items-center gap-3">
             {action}
-            <button className="relative w-10 h-10 rounded-xl border border-gray-200 bg-white flex items-center justify-center hover:bg-gray-50 transition-colors">
-              <Bell className="w-4 h-4 text-gray-500" />
-              <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-red-500" />
-            </button>
+            <div className="relative">
+              <button
+                onClick={openNotifications}
+                className="relative w-10 h-10 rounded-xl border border-gray-200 bg-white flex items-center justify-center hover:bg-gray-50 transition-colors"
+              >
+                <Bell className="w-4 h-4 text-gray-500" />
+                {unread > 0 && (
+                  <span className="absolute -top-1 -right-1 min-w-4 h-4 px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">
+                    {unread > 9 ? "9+" : unread}
+                  </span>
+                )}
+              </button>
+              {showNotifs && (
+                <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl border border-gray-200 shadow-xl z-50 overflow-hidden">
+                  <div className="px-4 py-3 border-b border-gray-100 font-semibold text-sm text-gray-900">Notifications</div>
+                  <div className="max-h-80 overflow-y-auto divide-y divide-gray-50">
+                    {notifications.length === 0 ? (
+                      <div className="py-8 text-center text-sm text-gray-400">No payments yet</div>
+                    ) : notifications.map((n: any) => (
+                      <div key={n.id} className="flex items-center gap-3 px-4 py-3">
+                        <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                          <ArrowDownLeft className="w-4 h-4 text-green-600" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm text-gray-900 truncate">Received from {n.name}</div>
+                          <div className="text-xs text-gray-400">{new Date(n.date).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</div>
+                        </div>
+                        <div className="text-sm font-semibold text-green-600 tabular-nums">+₹{(n.amount / 100).toLocaleString("en-IN")}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </header>
         <div className="flex-1 overflow-y-auto">{children}</div>
