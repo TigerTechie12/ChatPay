@@ -39,7 +39,11 @@ walletPayRouter.post('/payAtWallet', authMiddleware, walletLimiter, async(req, r
     await prisma.$transaction(async(txn: any) => {
       await txn.$queryRaw`SELECT * FROM "Balance" WHERE "userId"=${userId} FOR UPDATE`
       await txn.balance.update({where: {userId}, data: {amount: {decrement: amountInPaise}}})
-      await txn.balance.update({where: {userId: recipient.id}, data: {amount: {increment: amountInPaise}}})
+      await txn.balance.upsert({
+        where: {userId: recipient.id},
+        create: {userId: recipient.id, amount: amountInPaise, locked: 0},
+        update: {amount: {increment: amountInPaise}}
+      })
       await txn.p2pTransfer.create({data: {
         senderId: userId,
         receiverId: recipient.id,
