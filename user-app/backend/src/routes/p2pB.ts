@@ -46,7 +46,7 @@ p2pBRouter.post('/payAtBank', authMiddleware, bankLimiter, async(req, res) => {
         startedAt: new Date()
       }})
       await withdrawalQueue.add('p2pOffRampTxn', {offRampTxnId: offRampTxn.id}, {
-        jobId: String(offRampTxn.id),
+        jobId: `offramp-${offRampTxn.id}`,
         removeOnComplete: true,
         removeOnFail: {age: 24 * 3600},
         attempts: 5,

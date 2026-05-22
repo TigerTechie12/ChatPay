@@ -51,7 +51,7 @@ offRampRouter.post("/offramp", authMiddleware, offRampLimiter, async(req, res) =
       }})
 
       await withdrawalQueue.add('offRampTxn', {offRampTxnId: offRampTxn.id}, {
-        jobId: String(offRampTxn.id),
+        jobId: `offramp-${offRampTxn.id}`,
         removeOnComplete: true,
         removeOnFail: {age: 24 * 3600},
         attempts: 5,
