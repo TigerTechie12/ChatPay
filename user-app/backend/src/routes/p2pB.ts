@@ -2,19 +2,25 @@ import { Router } from 'express'
 import { PrismaClient } from 'chatpay-db'
 import { PrismaPg } from '@prisma/adapter-pg'
 import { authMiddleware } from 'chatpay-middleware'
-import { p2pBSchema } from 'shreyash-chatpay-common'
 import { rateLimitMiddleware } from '../lib/rateLimiter'
 import { withdrawalQueue } from '../lib/queue'
 import redis from '../lib/redis'
+import { z } from 'zod'
 
 const adapter = new PrismaPg({connectionString: process.env.DATABASE_URL})
 const prisma = new PrismaClient({adapter})
 export const p2pBRouter = Router()
 
+const bankInput = z.object({
+  amount: z.number().positive(),
+  accountNumber: z.string().min(1),
+  ifscCode: z.string().min(1)
+})
+
 const bankLimiter = rateLimitMiddleware('p2p-bank', 3, 60)
 
 p2pBRouter.post('/payAtBank', authMiddleware, bankLimiter, async(req, res) => {
-  const parsed = p2pBSchema.safeParse(req.body)
+  const parsed = bankInput.safeParse(req.body)
   if (!parsed.success) return res.status(400).json({message: parsed.error.issues[0]?.message ?? 'Invalid input'})
   const {amount, accountNumber, ifscCode} = parsed.data
 

@@ -14,6 +14,7 @@ const onRamp_1 = require("./routes/onRamp");
 const offRamp_1 = require("./routes/offRamp");
 const p2m_1 = require("./routes/p2m");
 const p2pW_1 = require("./routes/p2pW");
+const p2pB_1 = require("./routes/p2pB");
 const port = 3000;
 app.use((0, cors_1.default)());
 app.use(express_1.default.json());
@@ -22,6 +23,7 @@ app.use("/api/v1", onRamp_1.userRouter);
 app.use("/api/v1", offRamp_1.offRampRouter);
 app.use("/api/v1", p2m_1.p2mRouter);
 app.use("/api/v1", p2pW_1.walletPayRouter);
+app.use("/api/v1", p2pB_1.p2pBRouter);
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
 });
