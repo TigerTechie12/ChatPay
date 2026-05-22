@@ -10,11 +10,10 @@ const prisma=new PrismaClient({ adapter })
 
 const worker=new Worker('merchantWithdrawalQueue',async(job:Job)=>{
     await job.updateProgress(10)
-    const jobId=job.id
-    if(!jobId) throw new Error('Job has no id')
-    const id=parseInt(jobId)
+    const id=job.data.offRampTxnId
+    if(!id) throw new Error('Job has no offRampTxnId')
     const offRampTxn=await prisma.offRampTransaction.findUnique({where:{id}})
-    if(!offRampTxn) throw new Error(`OffRamp transaction ${jobId} not found`)
+    if(!offRampTxn) throw new Error(`OffRamp transaction ${id} not found`)
 
     const response=await axios.post('https://api.razorpay.com/v1/payouts',{currency:'INR',
         mode:'IMPS',
@@ -54,8 +53,8 @@ worker.on('failed',async(job: Job | undefined, error: Error, prev: string)=>{
     if(job?.attemptsMade===job?.opts.attempts){
         console.log(`Job ${job?.id} has completely exhausted all retries!`)
     }
-    if(!job?.id) return
-    const id=parseInt(job.id)
+    if(!job?.data?.offRampTxnId) return
+    const id=job.data.offRampTxnId
     const dbData=await prisma.offRampTransaction.findUnique({where:{id}})
     if(!dbData) return
     const merchantId=dbData.merchantId
