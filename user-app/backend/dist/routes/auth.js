@@ -37,7 +37,10 @@ exports.router.post('/signup', authRateLimiter, async (req, res) => {
         if (userExists)
             return res.status(409).json({ message: 'User already exists' });
         const hashedPassword = await bcryptjs_1.default.hash(password, 10);
-        await prisma.user.create({ data: { name, email, password: hashedPassword, number: numberBig } });
+        await prisma.user.create({ data: {
+                name, email, password: hashedPassword, number: numberBig,
+                Balance: { create: { amount: 0, locked: 0 } }
+            } });
         res.status(201).json({ message: 'User created' });
     }
     catch (e) {

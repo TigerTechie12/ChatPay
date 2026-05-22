@@ -8,18 +8,29 @@ const express_1 = require("express");
 const chatpay_db_1 = require("chatpay-db");
 const adapter_pg_1 = require("@prisma/adapter-pg");
 const chatpay_middleware_1 = require("chatpay-middleware");
-const shreyash_chatpay_common_1 = require("shreyash-chatpay-common");
 const rateLimiter_1 = require("../lib/rateLimiter");
 const redis_1 = __importDefault(require("../lib/redis"));
+const zod_1 = require("zod");
 const adapter = new adapter_pg_1.PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new chatpay_db_1.PrismaClient({ adapter });
 exports.walletPayRouter = (0, express_1.Router)();
+const walletInput = zod_1.z.object({
+    phoneNumber: zod_1.z.union([zod_1.z.string(), zod_1.z.number()]),
+    amount: zod_1.z.number().positive()
+});
 const walletLimiter = (0, rateLimiter_1.rateLimitMiddleware)('p2p-wallet', 10, 60);
 exports.walletPayRouter.post('/payAtWallet', chatpay_middleware_1.authMiddleware, walletLimiter, async (req, res) => {
-    const parsed = shreyash_chatpay_common_1.p2pWSchema.safeParse(req.body);
+    const parsed = walletInput.safeParse(req.body);
     if (!parsed.success)
         return res.status(400).json({ message: parsed.error.issues[0]?.message ?? 'Invalid input' });
     const { phoneNumber, amount } = parsed.data;
+    let numberBig;
+    try {
+        numberBig = BigInt(phoneNumber);
+    }
+    catch {
+        return res.status(400).json({ message: 'Invalid phone number' });
+    }
     const userId = req.userId;
     const amountInPaise = amount * 100;
     try {
@@ -29,7 +40,7 @@ exports.walletPayRouter.post('/payAtWallet', chatpay_middleware_1.authMiddleware
         const availableBalance = userBalance.amount - userBalance.locked;
         if (amountInPaise > availableBalance)
             return res.status(400).json({ message: "Insufficient Balance" });
-        const recipient = await prisma.user.findUnique({ where: { number: phoneNumber } });
+        const recipient = await prisma.user.findFirst({ where: { number: numberBig } });
         if (!recipient)
             return res.status(404).json({ message: "Recipient not found with given phone number" });
         await prisma.$transaction(async (txn) => {

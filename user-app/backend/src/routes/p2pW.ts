@@ -2,20 +2,28 @@ import { Router } from "express"
 import { PrismaClient } from "chatpay-db"
 import { PrismaPg } from "@prisma/adapter-pg"
 import { authMiddleware } from "chatpay-middleware"
-import { p2pWSchema } from "shreyash-chatpay-common"
 import { rateLimitMiddleware } from "../lib/rateLimiter"
 import redis from "../lib/redis"
+import { z } from "zod"
 
 const adapter = new PrismaPg({connectionString: process.env.DATABASE_URL})
 const prisma = new PrismaClient({adapter})
 export const walletPayRouter = Router()
 
+const walletInput = z.object({
+  phoneNumber: z.union([z.string(), z.number()]),
+  amount: z.number().positive()
+})
+
 const walletLimiter = rateLimitMiddleware('p2p-wallet', 10, 60)
 
 walletPayRouter.post('/payAtWallet', authMiddleware, walletLimiter, async(req, res) => {
-  const parsed = p2pWSchema.safeParse(req.body)
+  const parsed = walletInput.safeParse(req.body)
   if (!parsed.success) return res.status(400).json({message: parsed.error.issues[0]?.message ?? 'Invalid input'})
   const {phoneNumber, amount} = parsed.data
+
+  let numberBig: bigint
+  try { numberBig = BigInt(phoneNumber) } catch { return res.status(400).json({message: 'Invalid phone number'}) }
 
   const userId: any = req.userId
   const amountInPaise = amount * 100
@@ -25,7 +33,7 @@ walletPayRouter.post('/payAtWallet', authMiddleware, walletLimiter, async(req, r
     const availableBalance = userBalance.amount - userBalance.locked
     if (amountInPaise > availableBalance) return res.status(400).json({message: "Insufficient Balance"})
 
-    const recipient = await prisma.user.findUnique({where: {number: phoneNumber}})
+    const recipient = await prisma.user.findFirst({where: {number: numberBig}})
     if (!recipient) return res.status(404).json({message: "Recipient not found with given phone number"})
 
     await prisma.$transaction(async(txn: any) => {

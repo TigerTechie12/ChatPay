@@ -28,7 +28,10 @@ router.post('/signup', authRateLimiter, async(req, res) => {
     const userExists = await prisma.user.findFirst({where: {OR: [{email}, {number: numberBig}]}})
     if (userExists) return res.status(409).json({message: 'User already exists'})
     const hashedPassword = await bcrypt.hash(password, 10)
-    await prisma.user.create({data: {name, email, password: hashedPassword, number: numberBig}})
+    await prisma.user.create({data: {
+      name, email, password: hashedPassword, number: numberBig,
+      Balance: {create: {amount: 0, locked: 0}}
+    }})
     res.status(201).json({message: 'User created'})
   } catch(e: any) {
     console.error('[signup error]', e?.message, e?.code, e?.meta)
