@@ -8,6 +8,17 @@ const redisConnection = new IORedis(process.env.REDIS_URL || 'redis://localhost:
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL })
 const prisma=new PrismaClient({ adapter })
 
+async function simulatePayout(offRampTxn:any){
+    if(process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET){
+        return axios.post('https://api.razorpay.com/v1/payouts',{
+            currency:'INR', mode:'IMPS', purpose:'payout',
+            amount:offRampTxn.amount, accountNumber:offRampTxn.accountNumber, ifscCode:offRampTxn.ifscCode
+        },{ auth:{ username:process.env.RAZORPAY_KEY_ID, password:process.env.RAZORPAY_KEY_SECRET } })
+    }
+    await new Promise(r=>setTimeout(r,1500))
+    return { data:{ status:'SUCCESS' } }
+}
+
 const worker=new Worker('merchantWithdrawalQueue',async(job:Job)=>{
     await job.updateProgress(10)
     const id=job.data.offRampTxnId
@@ -15,13 +26,7 @@ const worker=new Worker('merchantWithdrawalQueue',async(job:Job)=>{
     const offRampTxn=await prisma.offRampTransaction.findUnique({where:{id}})
     if(!offRampTxn) throw new Error(`OffRamp transaction ${id} not found`)
 
-    const response=await axios.post('https://api.razorpay.com/v1/payouts',{currency:'INR',
-        mode:'IMPS',
-        purpose:'payout',
-        amount:offRampTxn.amount,
-        accountNumber:offRampTxn.accountNumber,
-        ifscCode:offRampTxn.ifscCode
-    })
+    const response=await simulatePayout(offRampTxn)
     await prisma.offRampTransaction.update({where:{id},data:{status:'PROCESSING'}})
     await job.updateProgress(50)
 
