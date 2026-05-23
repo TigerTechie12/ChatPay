@@ -39,7 +39,7 @@ payOutRouter.post('/merchant/manual/withdraw', authMiddleware, async(req:any,res
                 status:'QUEUED'
             }})
             await merchantWithdrawalQueue.add('offRampTxn', {offRampTxnId: offRampTxn.id}, {
-                jobId: String(offRampTxn.id),
+                jobId: `offramp-${offRampTxn.id}`,
                 removeOnComplete: true,
                 removeOnFail: {age: 24 * 3600},
                 attempts: 5,

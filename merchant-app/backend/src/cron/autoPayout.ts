@@ -53,7 +53,7 @@ data:{
 
 })
 
-await merchantWithdrawalQueue.add('offRampTxn',{offRampTxnId:offRampTransaction.id},{jobId:String(offRampTransaction.id),removeOnComplete:true,removeOnFail:{age:24*3600},attempts:5,backoff:{type:'fixed',delay:10000}})
+await merchantWithdrawalQueue.add('offRampTxn',{offRampTxnId:offRampTransaction.id},{jobId:`offramp-${offRampTransaction.id}`,removeOnComplete:true,removeOnFail:{age:24*3600},attempts:5,backoff:{type:'fixed',delay:10000}})
 
 }catch(e){console.log(`Payout failed for merchant ${merchant.id}:`,e);continue}
 

@@ -2,18 +2,28 @@ import nacl from 'tweetnacl'
 import axios from 'axios'
 import util from 'tweetnacl-util'
 
-export async function getOrCreateKeyPair() {
-  const stored = localStorage.getItem('chatKeyPair')
+export async function getOrCreateKeyPair(apiBase: string, token: string) {
+  let stored = localStorage.getItem('chatKeyPair')
   if (!stored) {
     const keyPair = nacl.box.keyPair()
-    const newStored = {
+    stored = JSON.stringify({
       publicKey: util.encodeBase64(keyPair.publicKey),
       privateKey: util.encodeBase64(keyPair.secretKey)
-    }
-    localStorage.setItem('chatKeyPair', JSON.stringify(newStored))
-    await axios.post('/api/users/publickey', { publicKey: newStored.publicKey })
+    })
+    localStorage.setItem('chatKeyPair', stored)
   }
-  const storedKeyPair = JSON.parse(localStorage.getItem('chatKeyPair')!)
+  const storedKeyPair = JSON.parse(stored)
+  // Always (re)register the public key with the chat server — idempotent, so
+  // it self-heals if a previous registration failed.
+  try {
+    await axios.post(
+      `${apiBase}/api/users/publickey`,
+      { publicKey: storedKeyPair.publicKey },
+      { headers: { Authorization: `Bearer ${token}` } }
+    )
+  } catch (e) {
+    console.error('Failed to register public key', e)
+  }
   return {
     publicKey: util.decodeBase64(storedKeyPair.publicKey),
     privateKey: util.decodeBase64(storedKeyPair.privateKey)
