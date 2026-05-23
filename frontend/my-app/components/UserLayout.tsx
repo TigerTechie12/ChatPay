@@ -168,7 +168,7 @@ export function UserLayout({
             <button
               onClick={handleSignout}
               title="Sign out"
-              className="w-8 h-8 rounded-md flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 transition-colors flex-shrink-0"
+              className="w-8 h-8 rounded-md flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 transition-colors shrink-0"
             >
               <LogOut className="w-4 h-4" />
             </button>
@@ -204,7 +204,7 @@ export function UserLayout({
                       <div className="py-8 text-center text-sm text-gray-400">No payments yet</div>
                     ) : notifications.map((n: any) => (
                       <div key={n.id} className="flex items-center gap-3 px-4 py-3">
-                        <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                        <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center shrink-0">
                           <ArrowDownLeft className="w-4 h-4 text-green-600" />
                         </div>
                         <div className="flex-1 min-w-0">

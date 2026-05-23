@@ -76,7 +76,7 @@ export function AddMoney() {
                     : "border-gray-200 bg-white hover:border-gray-300"
                 }`}
               >
-                <div className={`w-10 h-10 rounded-xl ${bank.color} flex items-center justify-center text-white text-sm font-bold flex-shrink-0`}>
+                <div className={`w-10 h-10 rounded-xl ${bank.color} flex items-center justify-center text-white text-sm font-bold shrink-0`}>
                   {bank.initials}
                 </div>
                 <div>
