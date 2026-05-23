@@ -65,11 +65,9 @@ export function UserLayout({
       })
       .catch((err) => {
         if (err.response?.status === 401) {
-          // invalid/expired token — kick back to login
           localStorage.removeItem("token")
           router.replace("/")
         } else {
-          // transient backend error (cold start / network) — token exists, render anyway
           setAuthChecked(true)
         }
       })
@@ -95,7 +93,6 @@ export function UserLayout({
           .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())
         setNotifications(credits.slice(0, 10))
         if (!initializedRef.current) {
-          // first load — baseline, don't flag historical as unread
           lastSeenRef.current = credits.length ? new Date(credits[0].date).getTime() : Date.now()
           localStorage.setItem("notif_last_seen", String(lastSeenRef.current))
           initializedRef.current = true
@@ -103,7 +100,7 @@ export function UserLayout({
         }
         const newCount = credits.filter((t: any) => new Date(t.date).getTime() > lastSeenRef.current).length
         if (newCount > 0) setUnread(newCount)
-      } catch { /* ignore poll errors */ }
+      } catch { }
     }
 
     poll()
@@ -125,7 +122,7 @@ export function UserLayout({
     const token = typeof window !== "undefined" ? localStorage.getItem("token") : null
     try {
       await axios.post(`${API}/api/v1/signout`, {}, { headers: { Authorization: `Bearer ${token}` } })
-    } catch { /* sign out locally regardless */ }
+    } catch {  }
     localStorage.removeItem("token")
     router.push("/")
   }
