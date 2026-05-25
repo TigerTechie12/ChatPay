@@ -27,6 +27,7 @@ const messagesEndRef=useRef<HTMLDivElement>(null)
 const [searchQuery,setSearchQuery]=useState("")
 const [searchResults,setSearchResults]=useState<any[]>([])
 const [searching,setSearching]=useState(false)
+const [chatError,setChatError]=useState("")
 
 useEffect(()=>{
   if(searchQuery.trim().length<2){setSearchResults([]);return}
@@ -42,6 +43,7 @@ useEffect(()=>{
 },[searchQuery])
 
 async function startConversation(user:any){
+  setChatError("")
   try{
     const token=localStorage.getItem("token")
     const res=await axios.post(`${CHAT_API}/api/conversations`,{otherUserId:user.id},{headers:{Authorization:`Bearer ${token}`}})
@@ -53,7 +55,10 @@ async function startConversation(user:any){
     otherUserId.current=user.id
     setSearchQuery("")
     setSearchResults([])
-  }catch(e){console.log("Failed to start conversation")}
+  }catch(e:any){
+    console.error("Failed to start conversation", e?.response?.status, e?.message)
+    setChatError(`Couldn't start chat (${e?.response?.status ?? e?.message}). Is the chat server reachable?`)
+  }
 }
 useEffect(()=>{
 async function fetchConversations(){
@@ -135,6 +140,7 @@ return <div className="min-h-screen bg-[#f5f5f0] flex">
         />
         {searching && <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />}
       </div>
+      {chatError && <p className="mt-2 text-xs text-red-500">{chatError}</p>}
     </div>
 
     {searchQuery.trim().length>=2 && (
