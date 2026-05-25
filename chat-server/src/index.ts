@@ -3,6 +3,7 @@ import { PrismaClient } from 'chatpay-db'
 import { PrismaPg } from '@prisma/adapter-pg'
 import http from 'http'
 import express from 'express'
+import cors from 'cors'
 import url from 'url'
 import jwt from 'jsonwebtoken'
 import { chatRouter } from './routes/route'
@@ -13,6 +14,7 @@ const prisma = new PrismaClient({adapter})
 const JWT_SECRET = process.env.JWT_SECRET as string
 const activeConnections = new Map()
 const app = express()
+app.use(cors())
 app.use(chatRouter)
 const wss = new WebSocketServer({ noServer: true })
 const server = http.createServer(app)
