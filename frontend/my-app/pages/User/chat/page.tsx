@@ -89,13 +89,20 @@ wsRef.current?.close()}
 useEffect(()=>{
 async function fetchMessages(){
 if(!conversationId || !keyPairRef.current) return
-try{
 setMsgLoading(true)
+setChatError("")
+try{
 const token = localStorage.getItem("token")
 const res=await axios.get(`${CHAT_API}/api/users/${otherUserId.current}/publickey`,{
 headers:{Authorization:`Bearer ${token}`}
 })
 const otherUserPublicKey=res.data.publicKey
+if(!otherUserPublicKey){
+  otherUserPublicKeyRef.current=null
+  setMessages([])
+  setChatError("This user hasn't opened ChatPay chat yet, so there's no encryption key for them. Ask them to open the Chat page once.")
+  return
+}
 otherUserPublicKeyRef.current=util.decodeBase64(otherUserPublicKey)
 const messagesRes=await axios.get(`${CHAT_API}/api/messages/${conversationIdRef.current}`,{
 headers:{Authorization:`Bearer ${token}`}
@@ -114,8 +121,8 @@ return {
     text:decrypted}
 })
 setMessages(msgArrayToRender)
-setMsgLoading(false)
 }catch(e){console.log("failed to load")}
+finally{setMsgLoading(false)}
 }
 fetchMessages()
 }
@@ -215,6 +222,8 @@ return <div className="min-h-screen bg-[#f5f5f0] flex">
           <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-3">
             {msgLoading
               ? <div className="flex items-center justify-center py-8 text-gray-400 text-sm">Loading messages...</div>
+              : chatError
+              ? <div className="flex items-center justify-center py-8 px-6 text-center text-amber-600 text-sm">{chatError}</div>
               : messages.map((m:any)=>{
                 const isMe = m.senderId !== otherUserId.current
                 return <div key={m.id} className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}>
@@ -236,8 +245,14 @@ return <div className="min-h-screen bg-[#f5f5f0] flex">
                 ref={inputRef}
                 onKeyDown={async(e)=>{
                   if(e.key ==="Enter"){
-                    setMessages((prev)=>[...prev,{id:Math.random(),senderId:"me",text:inputRef.current!.value,createdAt:new Date().toISOString()}])
-                    const encryptedText=encryptMessage(inputRef?.current?.value ?? "",keyPairRef.current!.privateKey,otherUserPublicKeyRef.current!)
+                    const text=inputRef.current?.value?.trim()
+                    if(!text) return
+                    if(!otherUserPublicKeyRef.current){
+                      setChatError("Can't send — this user hasn't set up their chat encryption key yet.")
+                      return
+                    }
+                    setMessages((prev)=>[...prev,{id:Math.random(),senderId:"me",text,createdAt:new Date().toISOString()}])
+                    const encryptedText=encryptMessage(text,keyPairRef.current!.privateKey,otherUserPublicKeyRef.current!)
                     wsRef.current?.send(JSON.stringify({type: "message",
                       conversationId: conversationId,
                       cipherText: encryptedText.cipherText,
