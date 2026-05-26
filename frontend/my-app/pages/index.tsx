@@ -45,7 +45,7 @@ export default function AuthPage() {
     setLoading(true)
     setError("")
     try {
-      const res = await axios.post(`${MERCHANT_API}/api/auth/google`, { code })
+      const res = await axios.post(`${MERCHANT_API}/api/v1/auth/google`, { code })
       localStorage.setItem("merchant_token", res.data.token)
       router.push("/merchant/overview/page")
     } catch {
