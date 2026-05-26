@@ -3,7 +3,8 @@ import axios from "axios"
 import { useEffect, useRef, useState } from "react"
 import util from "tweetnacl-util"
 import { getOrCreateKeyPair, encryptMessage, decryptMessage } from "@/lib/chat/crypto"
-import { Sidebar, Search, Loader2 } from "lucide-react"
+import { Sidebar, Search, Loader2, ArrowLeft } from "lucide-react"
+import { useRouter } from "next/router"
 
 const CHAT_API = process.env.NEXT_PUBLIC_CHAT_SERVER_URL ?? "http://localhost:3003"
 const WS_URL = CHAT_API.replace(/^http/, "ws")
@@ -12,6 +13,7 @@ const USER_API = process.env.NEXT_PUBLIC_USER_BACKEND_URL
 const avatarColors = ["bg-orange-500","bg-teal-600","bg-green-600","bg-blue-500","bg-purple-500","bg-red-500","bg-pink-500","bg-indigo-500"]
 
 export function Chat(){
+const router=useRouter()
 const [conversationList,setConversationList]=useState([])
 const [conversationId, setConversationId] = useState<number | null>(null)
 const conversationIdRef=useRef(null)
@@ -132,11 +134,20 @@ useEffect(()=>{
 messagesEndRef.current?.scrollIntoView({behavior:"smooth"})
 },[messages])
 
-return <div className="min-h-screen bg-[#f5f5f0] flex">
+return <div className="h-screen bg-[#f5f5f0] flex overflow-hidden">
 
   <div className="w-80 bg-white border-r border-gray-200 flex flex-col shrink-0">
     <div className="p-6 border-b border-gray-200">
-      <h1 className="text-xl font-semibold text-gray-900 tracking-tight mb-4">Messages</h1>
+      <div className="flex items-center gap-3 mb-4">
+        <button
+          onClick={()=>router.push("/User/dashboard/page")}
+          title="Back to dashboard"
+          className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 transition-colors shrink-0"
+        >
+          <ArrowLeft className="w-4 h-4" />
+        </button>
+        <h1 className="text-xl font-semibold text-gray-900 tracking-tight">Messages</h1>
+      </div>
       <div className="flex items-center gap-2 border border-gray-200 rounded-xl px-3 py-2 focus-within:border-gray-400 transition-colors">
         <Search className="w-4 h-4 text-gray-400" />
         <input
