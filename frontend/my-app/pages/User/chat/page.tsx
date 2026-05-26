@@ -30,6 +30,7 @@ const [searchQuery,setSearchQuery]=useState("")
 const [searchResults,setSearchResults]=useState<any[]>([])
 const [searching,setSearching]=useState(false)
 const [chatError,setChatError]=useState("")
+const [unreadMap,setUnreadMap]=useState<Record<number,number>>({})
 
 useEffect(()=>{
   if(searchQuery.trim().length<2){setSearchResults([]);return}
@@ -77,9 +78,11 @@ wsRef.current=new WebSocket(`${WS_URL}?token=${token}`)
 wsRef.current.onopen=()=>{console.log("WebSocket Connected")}
 wsRef.current.onmessage=(e)=>{
 const data=JSON.parse(e.data)
-if(data.conversationId ===conversationIdRef.current && data.senderId === otherUserId.current){
+if(data.conversationId ===conversationIdRef.current && data.senderId === otherUserId.current && otherUserPublicKeyRef.current){
 const decryptedMessage=decryptMessage(data.cipherText,data.nonce,keyPairRef.current!.privateKey,otherUserPublicKeyRef.current!)
 setMessages((prev)=>[...prev,{id:data.id,senderId:data.senderId,text:decryptedMessage ?? "",createdAt:data.createdAt}])
+}else if(data.conversationId !== conversationIdRef.current){
+setUnreadMap((prev)=>({...prev,[data.conversationId]:(prev[data.conversationId] ?? 0)+1}))
 }}
 }
 catch(e){console.log("Failed to fetch conversations")}
@@ -109,7 +112,7 @@ otherUserPublicKeyRef.current=util.decodeBase64(otherUserPublicKey)
 const messagesRes=await axios.get(`${CHAT_API}/api/messages/${conversationIdRef.current}`,{
 headers:{Authorization:`Bearer ${token}`}
 })
-const messagesData=messagesRes.data
+const messagesData=messagesRes.data.messages ?? []
 const msgArrayToRender=messagesData.map((m:any)=>{
 const nonce=m.nonce
 const cipherText=m.cipherText
@@ -190,16 +193,22 @@ return <div className="h-screen bg-[#f5f5f0] flex overflow-hidden">
               conversationIdRef.current=c.conversationId
               setConversationId(c.conversationId)
               otherUserId.current=c.otherUserId
+              setUnreadMap((prev)=>{const n={...prev}; delete n[c.conversationId]; return n})
             }}
             className={`flex items-center gap-3 p-4 cursor-pointer hover:bg-gray-50 transition-colors border-b border-gray-100 ${conversationId === c.conversationId ? "bg-green-50 border-l-4 border-l-green-500" : ""}`}
           >
             <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold text-sm shrink-0 ${avatarColors[i % avatarColors.length]}`}>
               {c.otherUserName?.charAt(0)?.toUpperCase() ?? "?"}
             </div>
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <div className="font-medium text-gray-900 text-sm truncate">{c.otherUserName}</div>
               <div className="text-xs text-gray-400">#{c.conversationId}</div>
             </div>
+            {unreadMap[c.conversationId] > 0 && (
+              <span className="ml-auto min-w-5 h-5 px-1.5 rounded-full bg-green-500 text-white text-xs font-bold flex items-center justify-center shrink-0">
+                {unreadMap[c.conversationId]}
+              </span>
+            )}
           </div>
         })}
     </div>
