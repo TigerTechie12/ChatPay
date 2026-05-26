@@ -183,11 +183,11 @@ export function Dashboard() {
       subtitle="Here's what's moving in your wallet today."
       action={sendAction}
     >
-    <div className="p-6 max-w-6xl mx-auto space-y-5">
+    <div className="p-4 sm:p-6 max-w-6xl mx-auto space-y-5">
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
-        <div className="col-span-2 rounded-2xl p-6 flex flex-col gap-5"
+        <div className="lg:col-span-2 rounded-2xl p-6 flex flex-col gap-5"
           style={{ background: "linear-gradient(135deg, #0d1a2d 0%, #0a2a1a 100%)" }}>
           <div className="flex items-center justify-between">
             <span className="text-xs tracking-widest text-gray-400 uppercase">Available Balance</span>
@@ -199,10 +199,10 @@ export function Dashboard() {
             </span>
           </div>
           <div>
-            <div className="text-5xl font-bold tracking-tight text-white">{formatAmount(available)}</div>
+            <div className="text-4xl sm:text-5xl font-bold tracking-tight text-white break-words">{formatAmount(available)}</div>
             <div className="text-sm text-gray-400 mt-1">Total {formatAmount(balance)}</div>
           </div>
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-3">
             <button onClick={() => router.push("/User/AddMoney/page")} className="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
               <PlusCircle className="w-4 h-4" /> Add money
             </button>

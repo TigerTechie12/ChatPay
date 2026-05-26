@@ -3,7 +3,7 @@ import { useEffect, useState, useRef } from "react"
 import { useRouter } from "next/router"
 import axios from "axios"
 import Link from "next/link"
-import { Home, Send, PlusCircle, Building2, MessageSquare, QrCode, Bell, LogOut, ArrowDownLeft } from "lucide-react"
+import { Home, Send, PlusCircle, Building2, MessageSquare, QrCode, Bell, LogOut, ArrowDownLeft, Menu, X } from "lucide-react"
 
 const API = process.env.NEXT_PUBLIC_USER_BACKEND_URL
 
@@ -51,6 +51,7 @@ export function UserLayout({
   const router = useRouter()
   const [me, setMe] = useState<{ name: string; number: string | null } | null>(null)
   const [authChecked, setAuthChecked] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   useEffect(() => {
     const token = typeof window !== "undefined" ? localStorage.getItem("token") : null
@@ -142,15 +143,32 @@ export function UserLayout({
 
   return (
     <div className="min-h-screen flex bg-[#f7f7f3]">
-      <aside className="w-64 bg-[#0d1421] text-gray-300 flex flex-col shrink-0">
+      {sidebarOpen && (
+        <div
+          onClick={() => setSidebarOpen(false)}
+          className="fixed inset-0 z-40 bg-black/40 lg:hidden"
+        />
+      )}
+      <aside
+        className={`fixed lg:static inset-y-0 left-0 z-50 w-64 bg-[#0d1421] text-gray-300 flex flex-col shrink-0 transform transition-transform duration-200 lg:translate-x-0 ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
         <div className="p-5 flex items-center gap-3">
           <div className="w-9 h-9 rounded-lg bg-emerald-500 flex items-center justify-center text-white font-bold text-sm">C</div>
           <span className="text-white font-semibold text-lg">ChatPay</span>
+          <button
+            onClick={() => setSidebarOpen(false)}
+            title="Close menu"
+            className="ml-auto w-8 h-8 rounded-md flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 transition-colors lg:hidden"
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
 
         <nav className="flex-1 px-3 py-4 space-y-6 overflow-y-auto">
-          <SidebarGroup label="MONEY" items={MONEY} isActive={isActive} />
-          <SidebarGroup label="SOCIAL" items={SOCIAL} isActive={isActive} />
+          <SidebarGroup label="MONEY" items={MONEY} isActive={isActive} onNavigate={() => setSidebarOpen(false)} />
+          <SidebarGroup label="SOCIAL" items={SOCIAL} isActive={isActive} onNavigate={() => setSidebarOpen(false)} />
         </nav>
 
         {me && (
@@ -174,10 +192,19 @@ export function UserLayout({
       </aside>
 
       <main className="flex-1 flex flex-col min-w-0">
-        <header className="flex items-center justify-between px-8 py-5 border-b border-gray-200/60 bg-[#f7f7f3]">
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">{title}</h1>
-            {subtitle && <p className="text-sm text-gray-500 mt-0.5">{subtitle}</p>}
+        <header className="flex items-center justify-between gap-3 px-4 sm:px-8 py-5 border-b border-gray-200/60 bg-[#f7f7f3]">
+          <div className="flex items-center gap-3 min-w-0">
+            <button
+              onClick={() => setSidebarOpen(true)}
+              title="Open menu"
+              className="w-10 h-10 rounded-xl border border-gray-200 bg-white flex items-center justify-center hover:bg-gray-50 transition-colors shrink-0 lg:hidden"
+            >
+              <Menu className="w-4 h-4 text-gray-600" />
+            </button>
+            <div className="min-w-0">
+              <h1 className="text-lg sm:text-xl font-bold text-gray-900 truncate">{title}</h1>
+              {subtitle && <p className="text-sm text-gray-500 mt-0.5 truncate">{subtitle}</p>}
+            </div>
           </div>
           <div className="flex items-center gap-3">
             {action}
@@ -227,11 +254,13 @@ function SidebarGroup({
   label,
   items,
   isActive,
+  onNavigate,
   children,
 }: {
   label: string
   items: NavItem[]
   isActive: (href: string) => boolean
+  onNavigate?: () => void
   children?: React.ReactNode
 }) {
   return (
@@ -245,6 +274,7 @@ function SidebarGroup({
             <Link
               key={item.href}
               href={item.href}
+              onClick={onNavigate}
               className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
                 active ? "bg-white text-gray-900 font-semibold" : "text-gray-300 hover:bg-white/5"
               }`}

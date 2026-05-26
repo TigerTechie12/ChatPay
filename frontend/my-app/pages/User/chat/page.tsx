@@ -139,7 +139,7 @@ messagesEndRef.current?.scrollIntoView({behavior:"smooth"})
 
 return <div className="h-screen bg-[#f5f5f0] flex overflow-hidden">
 
-  <div className="w-80 bg-white border-r border-gray-200 flex flex-col shrink-0">
+  <div className={`w-full lg:w-80 bg-white border-r border-gray-200 flex-col lg:shrink-0 ${conversationId ? "hidden lg:flex" : "flex"}`}>
     <div className="p-6 border-b border-gray-200">
       <div className="flex items-center gap-3 mb-4">
         <button
@@ -214,7 +214,7 @@ return <div className="h-screen bg-[#f5f5f0] flex overflow-hidden">
     </div>
   </div>
 
-  <div className="flex-1 flex flex-col min-w-0">
+  <div className={`flex-1 flex-col min-w-0 ${conversationId ? "flex" : "hidden lg:flex"}`}>
     {!conversationId
       ? <div className="flex-1 flex flex-col items-center justify-center text-gray-400 gap-2">
           <div className="w-16 h-16 rounded-2xl bg-white border border-gray-200 flex items-center justify-center mb-2">
@@ -224,7 +224,14 @@ return <div className="h-screen bg-[#f5f5f0] flex overflow-hidden">
           <p className="text-sm text-gray-400">Choose from your conversations on the left</p>
         </div>
       : <>
-          <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center gap-3">
+          <div className="bg-white border-b border-gray-200 px-4 sm:px-6 py-4 flex items-center gap-3">
+            <button
+              onClick={()=>{setConversationId(null); conversationIdRef.current=null}}
+              title="Back to conversations"
+              className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 transition-colors shrink-0 lg:hidden"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </button>
             {conversationList.map((c:any, i:number)=> c.conversationId === conversationId
               ? <div key={c.conversationId} className="flex items-center gap-3">
                   <div className={`w-9 h-9 rounded-full flex items-center justify-center text-white font-semibold text-sm shrink-0 ${avatarColors[i % avatarColors.length]}`}>
