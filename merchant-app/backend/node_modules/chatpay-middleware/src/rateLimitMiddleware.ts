@@ -1,4 +1,4 @@
-import { rateLimit } from "./lib/rateLimit";
+import { rateLimit } from "./lib/rateLimit"
 export async function rateLimiter(prefix:string,limit:number,windowinSec:number){
 return async function(req:any,res:any,next:any){
 const key=`${prefix}:${req.userId || req.ip} `
@@ -9,7 +9,4 @@ if(!result.allowed){
 res.set('X-RateLimit-Limit',String(result.remaining))
 next()
 }
-
-
-
 }

@@ -21,7 +21,7 @@
     "axios": "^1.15.0",
     "bullmq": "^5.73.5",
     "chatpay-db": "^2.256.3",
-    "chatpay-middleware": "^2.2.31",
+    "chatpay-middleware": "^2.2.312152",
     "cors": "^2.8.6",
     "cron": "^4.4.0",
     "dotenv": "^17.4.1",
