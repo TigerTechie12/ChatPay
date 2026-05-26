@@ -29,7 +29,7 @@ server.on('upgrade', (req, socket, head) => {
   }
   try {
     const decode = jwt.verify(token, JWT_SECRET) as jwt.JwtPayload
-    const userId = decode.userId
+    const userId = Number(decode.userId)
     wss.handleUpgrade(req, socket as any, head as any, (ws) => {
       ;(ws as any).userId = userId
       activeConnections.set(userId, ws)
@@ -61,7 +61,10 @@ wss.on('connection', (socket) => {
 
     const participants = await prisma.conversationParticipant.findMany({ where: { conversationId } })
     const isMember = participants.some((p: any) => p.userId === userId)
-    if (!isMember) return
+    if (!isMember) {
+      console.error('[ws] not a member', { userId, conversationId, participantIds: participants.map((p:any)=>p.userId) })
+      return
+    }
 
     const savedMessage = await prisma.message.create({
       data: {
@@ -72,12 +75,14 @@ wss.on('connection', (socket) => {
         createdAt: new Date()
       }
     })
+    console.log('[ws] saved message', savedMessage.id, 'in conversation', conversationId)
 
     redis.publish('chat:messages', JSON.stringify(savedMessage))
 
     for (const p of participants) {
       if (p.userId !== userId) {
         const ws = activeConnections.get(p.userId)
+        console.log('[ws] delivering to', p.userId, '— connected:', !!ws, '| online users:', [...activeConnections.keys()])
         if (ws) ws.send(JSON.stringify(savedMessage))
       }
     }
