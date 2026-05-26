@@ -34,8 +34,10 @@ chatRouter.get('/api/conversations', async (req:any, res) => {
 })
 
 chatRouter.post('/api/conversations', async (req:any, res:any) => {
-  const otherUserId = req.body.otherUserId
-  const userId = req.userId
+  const otherUserId = Number(req.body.otherUserId)
+  const userId = Number(req.userId)
+  if (!otherUserId || !userId) return res.status(400).json({ message: "Invalid user id" })
+  if (otherUserId === userId) return res.status(400).json({ message: "Cannot start a conversation with yourself" })
   try {
     const existing = await prisma.conversationParticipant.findFirst({
       where: {
