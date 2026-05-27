@@ -111,7 +111,7 @@ export function SendMoney() {
 
   return (
     <UserLayout title="Send money" subtitle="Peer-to-peer transfer · instant settlement">
-    <div className="p-6 grid grid-cols-2 gap-5 max-w-5xl">
+    <div className="p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-2 gap-5 max-w-5xl">
 
       <div className="bg-white rounded-2xl border border-gray-200 p-6">
         <div className="flex gap-1 bg-gray-100 rounded-lg p-1 mb-5">
@@ -207,7 +207,7 @@ export function SendMoney() {
           <span className="text-sm text-gray-500">Available ₹{availableINR.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
         </div>
 
-        <div className="text-5xl font-semibold tracking-tight text-center my-6">
+        <div className="text-4xl sm:text-5xl font-semibold tracking-tight text-center my-6">
           <span className="text-gray-900">₹{intPart}</span>
           {amount.includes(".") && <span className="text-gray-900">.{decPart}</span>}
           <span className="text-gray-400">{ghostDec}</span>

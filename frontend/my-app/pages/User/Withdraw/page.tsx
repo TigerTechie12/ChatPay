@@ -120,7 +120,7 @@ export function Withdraw() {
 
   return (
     <UserLayout title="Withdraw to bank" subtitle="Funds settle in your linked account within 2–4 hours.">
-    <div className="p-6">
+    <div className="p-4 sm:p-6">
       {successId !== null && (
         <div className="mb-4 px-5 py-4 bg-green-50 border border-green-200 rounded-xl flex items-center justify-between">
           <div>
@@ -133,9 +133,9 @@ export function Withdraw() {
         </div>
       )}
 
-      <div className="grid grid-cols-5 gap-5 mb-5">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 mb-5">
 
-        <div className="col-span-3 bg-white rounded-2xl border border-gray-200 p-6">
+        <div className="lg:col-span-3 bg-white rounded-2xl border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-base font-semibold text-gray-900">Linked account</h2>
             {account && !editMode && (
@@ -257,7 +257,7 @@ export function Withdraw() {
           )}
         </div>
 
-        <div className="col-span-2 bg-white rounded-2xl border border-gray-200 p-6">
+        <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-200 p-6">
           <h2 className="text-base font-semibold text-gray-900 mb-1">How it works</h2>
           <p className="text-sm text-gray-400 mb-6">Reliable withdrawal pipeline with automatic retries.</p>
 
@@ -281,7 +281,8 @@ export function Withdraw() {
         <h2 className="text-base font-semibold text-gray-900 mb-0.5">Withdrawal history</h2>
         <p className="text-sm text-green-600 mb-5">All OffRampTransactions on this account</p>
 
-        <table className="w-full">
+        <div className="overflow-x-auto">
+        <table className="w-full min-w-[520px]">
           <thead>
             <tr className="border-b border-gray-100">
               {["DATE", "REF", "BANK", "AMOUNT", "STATUS"].map(h => (
@@ -317,6 +318,7 @@ export function Withdraw() {
             })}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
     </UserLayout>

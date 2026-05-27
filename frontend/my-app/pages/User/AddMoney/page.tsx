@@ -58,14 +58,14 @@ export function AddMoney() {
 
   return (
     <UserLayout title="Add money" subtitle="Top up your ChatPay wallet from any bank.">
-    <div className="p-6">
-      <div className="bg-white rounded-2xl border border-gray-200 p-8 max-w-4xl">
+    <div className="p-4 sm:p-6">
+      <div className="bg-white rounded-2xl border border-gray-200 p-5 sm:p-8 max-w-4xl">
 
         <div className="mb-8">
           <h2 className="text-base font-semibold text-gray-900">Choose source bank</h2>
           <p className="text-sm text-gray-400 mt-0.5 mb-5">Funds appear in your wallet after bank confirmation.</p>
 
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {BANKS.map(bank => (
               <button
                 key={bank.id}
@@ -79,8 +79,8 @@ export function AddMoney() {
                 <div className={`w-10 h-10 rounded-xl ${bank.color} flex items-center justify-center text-white text-sm font-bold shrink-0`}>
                   {bank.initials}
                 </div>
-                <div>
-                  <div className="font-medium text-gray-900 text-sm">{bank.name}</div>
+                <div className="min-w-0">
+                  <div className="font-medium text-gray-900 text-sm truncate">{bank.name}</div>
                   <div className="text-xs text-gray-400 mt-0.5">••{bank.last4}</div>
                 </div>
               </button>

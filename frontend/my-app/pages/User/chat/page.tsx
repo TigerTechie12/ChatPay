@@ -3,7 +3,7 @@ import axios from "axios"
 import { useEffect, useRef, useState } from "react"
 import util from "tweetnacl-util"
 import { getOrCreateKeyPair, encryptMessage, decryptMessage } from "@/lib/chat/crypto"
-import { Sidebar, Search, Loader2, ArrowLeft } from "lucide-react"
+import { Sidebar, Search, Loader2, ArrowLeft, Send } from "lucide-react"
 import { useRouter } from "next/router"
 
 const CHAT_API = process.env.NEXT_PUBLIC_CHAT_SERVER_URL ?? "http://localhost:3003"
@@ -137,6 +137,22 @@ useEffect(()=>{
 messagesEndRef.current?.scrollIntoView({behavior:"smooth"})
 },[messages])
 
+function sendMessage(){
+  const text=inputRef.current?.value?.trim()
+  if(!text) return
+  if(!otherUserPublicKeyRef.current){
+    setChatError("Can't send — this user hasn't set up their chat encryption key yet.")
+    return
+  }
+  setMessages((prev)=>[...prev,{id:Math.random(),senderId:"me",text,createdAt:new Date().toISOString()}])
+  const encryptedText=encryptMessage(text,keyPairRef.current!.privateKey,otherUserPublicKeyRef.current!)
+  wsRef.current?.send(JSON.stringify({type: "message",
+    conversationId: conversationId,
+    cipherText: encryptedText.cipherText,
+    nonce: encryptedText.nonce}))
+  inputRef.current!.value=""
+}
+
 return <div className="h-screen bg-[#f5f5f0] flex overflow-hidden">
 
   <div className={`w-full lg:w-80 bg-white border-r border-gray-200 flex-col lg:shrink-0 ${conversationId ? "hidden lg:flex" : "flex"}`}>
@@ -246,7 +262,7 @@ return <div className="h-screen bg-[#f5f5f0] flex overflow-hidden">
             )}
           </div>
 
-          <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-3">
+          <div className="flex-1 overflow-y-auto p-4 sm:p-6 flex flex-col gap-3">
             {msgLoading
               ? <div className="flex items-center justify-center py-8 text-gray-400 text-sm">Loading messages...</div>
               : chatError
@@ -254,7 +270,7 @@ return <div className="h-screen bg-[#f5f5f0] flex overflow-hidden">
               : messages.map((m:any)=>{
                 const isMe = m.senderId !== otherUserId.current
                 return <div key={m.id} className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}>
-                  <div className={`max-w-xs lg:max-w-md px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${isMe ? "bg-green-600 text-white rounded-br-sm" : "bg-white border border-gray-200 text-gray-900 rounded-bl-sm"}`}>
+                  <div className={`max-w-[75%] lg:max-w-md px-4 py-2.5 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap break-words ${isMe ? "bg-green-600 text-white rounded-br-sm" : "bg-white border border-gray-200 text-gray-900 rounded-bl-sm"}`}>
                     {m.text}
                   </div>
                   <div className="text-xs text-gray-400 mt-1 px-1">
@@ -265,31 +281,24 @@ return <div className="h-screen bg-[#f5f5f0] flex overflow-hidden">
             <div ref={messagesEndRef} />
           </div>
 
-          <div className="bg-white border-t border-gray-200 p-4">
-            <div className="flex items-center gap-3 border border-gray-200 rounded-xl px-4 py-3 focus-within:border-gray-400 transition-colors bg-white">
-              <input
-                placeholder="Type a message..."
-                ref={inputRef}
-                onKeyDown={async(e)=>{
-                  if(e.key ==="Enter"){
-                    const text=inputRef.current?.value?.trim()
-                    if(!text) return
-                    if(!otherUserPublicKeyRef.current){
-                      setChatError("Can't send — this user hasn't set up their chat encryption key yet.")
-                      return
-                    }
-                    setMessages((prev)=>[...prev,{id:Math.random(),senderId:"me",text,createdAt:new Date().toISOString()}])
-                    const encryptedText=encryptMessage(text,keyPairRef.current!.privateKey,otherUserPublicKeyRef.current!)
-                    wsRef.current?.send(JSON.stringify({type: "message",
-                      conversationId: conversationId,
-                      cipherText: encryptedText.cipherText,
-                      nonce: encryptedText.nonce}))
-                    inputRef.current!.value=""
-                  }
-                }}
-                className="flex-1 text-sm text-gray-900 outline-none bg-transparent placeholder:text-gray-400"
-              />
-              <span className="text-xs text-gray-400 select-none">↵ Enter</span>
+          <div className="bg-white border-t border-gray-200 p-3 sm:p-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="flex-1 flex items-center gap-3 border border-gray-200 rounded-xl px-4 py-3 focus-within:border-gray-400 transition-colors bg-white">
+                <input
+                  placeholder="Type a message..."
+                  ref={inputRef}
+                  onKeyDown={(e)=>{ if(e.key ==="Enter") sendMessage() }}
+                  className="flex-1 text-sm text-gray-900 outline-none bg-transparent placeholder:text-gray-400"
+                />
+                <span className="hidden sm:inline text-xs text-gray-400 select-none">↵ Enter</span>
+              </div>
+              <button
+                onClick={sendMessage}
+                title="Send"
+                className="shrink-0 w-12 h-12 rounded-xl bg-green-600 hover:bg-green-700 text-white flex items-center justify-center transition-colors"
+              >
+                <Send className="w-5 h-5" />
+              </button>
             </div>
           </div>
         </>
