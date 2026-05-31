@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react"
 import axios from "axios"
 import { Bell, Loader2, X } from "lucide-react"
+import { MerchantLayout } from "@/components/MerchantLayout"
 
 const API = process.env.NEXT_PUBLIC_MERCHANT_BACKEND_URL
 
@@ -138,7 +139,8 @@ export function MerchantPayout() {
     : "bg-white border-gray-200 text-gray-900 placeholder:text-gray-400"
 
   return (
-    <div className={`min-h-screen ${bg} p-6 transition-colors duration-200`}>
+    <MerchantLayout>
+    <div className={`min-h-screen ${bg} p-4 sm:p-6 transition-colors duration-200`}>
 
       <div className="flex items-start justify-between mb-6">
         <div>
@@ -171,7 +173,7 @@ export function MerchantPayout() {
         </div>
       )}
 
-      <div className="grid grid-cols-3 gap-4 mb-5">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
         <div className={`rounded-2xl border p-5 ${card}`}>
           <p className={`text-[10px] tracking-widest uppercase font-semibold ${lbl} mb-3`}>This Cycle</p>
           <p className={`text-2xl font-bold tabular-nums ${tx}`}>{fetching ? "…" : formatAmount(locked)}</p>
@@ -224,7 +226,8 @@ export function MerchantPayout() {
           </button>
         </div>
 
-        <table className="w-full">
+        <div className="overflow-x-auto">
+        <table className="w-full min-w-[520px]">
           <thead>
             <tr className={`border-b ${thd}`}>
               <th className={`text-[10px] font-semibold tracking-widest uppercase text-left py-3 pr-8 ${thd}`}>Date</th>
@@ -262,6 +265,7 @@ export function MerchantPayout() {
             })}
           </tbody>
         </table>
+        </div>
 
         {showTweaks && (
           <div className={`absolute top-0 right-0 w-72 rounded-2xl border shadow-2xl p-5 z-20 ${card}`}>
@@ -362,6 +366,7 @@ export function MerchantPayout() {
         </div>
       )}
     </div>
+    </MerchantLayout>
   )
 }
 

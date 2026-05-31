@@ -3,6 +3,7 @@ import { useState, useEffect, useRef, useCallback } from "react"
 import axios from "axios"
 import { Bell, Download, X } from "lucide-react"
 import QRCode from "qrcode"
+import { MerchantLayout } from "@/components/MerchantLayout"
 
 const API = process.env.NEXT_PUBLIC_MERCHANT_BACKEND_URL
 const WS_URL = process.env.NEXT_PUBLIC_MERCHANT_BACKEND_URL
@@ -149,7 +150,8 @@ export function MerchantOverview() {
   const div   = isDark ? "divide-gray-800"                : "divide-gray-100"
 
   return (
-    <div className={`min-h-screen ${bg} p-6 transition-colors duration-200`}>
+    <MerchantLayout>
+    <div className={`min-h-screen ${bg} p-4 sm:p-6 transition-colors duration-200`}>
 
       <div className="flex items-start justify-between mb-6">
         <div>
@@ -176,7 +178,7 @@ export function MerchantOverview() {
         </div>
       </div>
 
-      <div className="grid grid-cols-4 gap-4 mb-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
         <div className={`rounded-2xl border p-5 ${card}`}>
           <p className={`text-[10px] tracking-widest uppercase font-semibold ${lbl} mb-3`}>Total Earnings</p>
           <p className={`text-2xl font-bold tabular-nums ${ac.text}`}>{formatAmount(totalBalance)}</p>
@@ -201,9 +203,9 @@ export function MerchantOverview() {
         </div>
       </div>
 
-      <div className="grid grid-cols-5 gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
 
-        <div className={`col-span-3 rounded-2xl border p-6 ${card}`}>
+        <div className={`lg:col-span-3 rounded-2xl border p-6 ${card}`}>
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className={`text-base font-semibold ${tx}`}>Recent payments</h2>
@@ -250,7 +252,7 @@ export function MerchantOverview() {
           </div>
         </div>
 
-        <div className="col-span-2 relative">
+        <div className="lg:col-span-2 relative">
 
           <div className={`rounded-2xl border p-6 ${card}`}>
             <h2 className={`text-base font-semibold ${tx}`}>Your QR</h2>
@@ -332,6 +334,7 @@ export function MerchantOverview() {
         </div>
       </div>
     </div>
+    </MerchantLayout>
   )
 }
 

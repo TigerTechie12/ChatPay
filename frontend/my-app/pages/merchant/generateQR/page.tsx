@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from "react"
 import axios from "axios"
 import QRCode from "qrcode"
 import { Download, Copy, Check, X } from "lucide-react"
+import { MerchantLayout } from "@/components/MerchantLayout"
 
 const API = process.env.NEXT_PUBLIC_MERCHANT_BACKEND_URL
 
@@ -117,7 +118,8 @@ export function GenerateQR() {
   const shortId = merchantId ? `m_${String(merchantId).slice(0, 4)}` : "—"
 
   return (
-    <div className={`min-h-screen ${bg} p-6 transition-colors duration-200`}>
+    <MerchantLayout>
+    <div className={`min-h-screen ${bg} p-4 sm:p-6 transition-colors duration-200`}>
 
       <div className="flex items-start justify-between mb-6">
         <div>
@@ -132,7 +134,7 @@ export function GenerateQR() {
         </button>
       </div>
 
-      <div className="grid grid-cols-2 gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
 
         <div className={`rounded-2xl border p-6 ${card}`}>
           <h2 className={`text-base font-semibold ${tx} mb-1`}>Parameters</h2>
@@ -292,6 +294,7 @@ export function GenerateQR() {
         </div>
       </div>
     </div>
+    </MerchantLayout>
   )
 }
 

@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react"
 import axios from "axios"
 import { Bell, Pencil, Check, Loader2, X } from "lucide-react"
+import { MerchantLayout } from "@/components/MerchantLayout"
 
 const API = process.env.NEXT_PUBLIC_MERCHANT_BACKEND_URL
 
@@ -92,7 +93,8 @@ export function MerchantSettings() {
     : "bg-white border-gray-200 text-gray-900 placeholder:text-gray-400"
 
   return (
-    <div className={`min-h-screen ${bg} p-6 transition-colors duration-200`}>
+    <MerchantLayout>
+    <div className={`min-h-screen ${bg} p-4 sm:p-6 transition-colors duration-200`}>
 
       <div className="flex items-start justify-between mb-6">
         <div>
@@ -278,6 +280,7 @@ export function MerchantSettings() {
         </div>
       )}
     </div>
+    </MerchantLayout>
   )
 }
 

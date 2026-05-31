@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from "react"
 import axios from "axios"
 import { Bell, X } from "lucide-react"
+import { MerchantLayout } from "@/components/MerchantLayout"
 
 const API = process.env.NEXT_PUBLIC_MERCHANT_BACKEND_URL
 const WS_URL = process.env.NEXT_PUBLIC_MERCHANT_BACKEND_URL
@@ -98,7 +99,8 @@ export function MerchantTransactions() {
   const row  = isDark ? "border-gray-800 hover:bg-gray-800/50" : "border-gray-50 hover:bg-gray-50/80"
 
   return (
-    <div className={`min-h-screen ${bg} p-6 transition-colors duration-200`}>
+    <MerchantLayout>
+    <div className={`min-h-screen ${bg} p-4 sm:p-6 transition-colors duration-200`}>
 
       <div className="flex items-start justify-between mb-6">
         <div>
@@ -127,7 +129,8 @@ export function MerchantTransactions() {
       </div>
 
       <div className={`relative rounded-2xl border ${card}`}>
-        <table className="w-full">
+        <div className="overflow-x-auto">
+        <table className="w-full min-w-[640px]">
           <thead>
             <tr className={`border-b ${thd}`}>
               <th className={`text-[10px] font-semibold tracking-widest uppercase text-left px-6 py-4 ${thd}`}>Payer</th>
@@ -196,6 +199,7 @@ export function MerchantTransactions() {
             )}
           </tbody>
         </table>
+        </div>
 
         {showTweaks && (
           <div className={`absolute top-0 right-0 w-72 rounded-2xl border shadow-2xl p-5 z-20 ${card}`}>
@@ -248,6 +252,7 @@ export function MerchantTransactions() {
         )}
       </div>
     </div>
+    </MerchantLayout>
   )
 }
 
