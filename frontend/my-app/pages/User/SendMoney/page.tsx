@@ -58,6 +58,8 @@ export function SendMoney() {
     return () => clearTimeout(t)
   }, [query])
 
+  const handleSendRef = useRef<() => void>(() => {})
+
   const handlePress = (val: string) => {
     setMessage(null)
     setAmount(prev => {
@@ -103,6 +105,21 @@ export function SendMoney() {
       setSending(false)
     }
   }
+
+  handleSendRef.current = handleSend
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      const t = e.target as HTMLElement | null
+      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return
+      if (/^[0-9]$/.test(e.key)) { handlePress(e.key); e.preventDefault() }
+      else if (e.key === ".") { handlePress("."); e.preventDefault() }
+      else if (e.key === "Backspace") { handlePress("backspace"); e.preventDefault() }
+      else if (e.key === "Enter") { handleSendRef.current() }
+    }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [])
 
   const intPart = amount.includes(".") ? amount.split(".")[0] : amount
   const decPart = amount.includes(".") ? amount.split(".")[1] : ""
