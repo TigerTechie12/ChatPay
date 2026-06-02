@@ -40,6 +40,8 @@ p2mRouter.post('/transfer/merchant', authMiddleware, transferLimiter, async(req:
     const availableBalance = balance.amount - balance.locked
     if (availableBalance < amount * 100) return res.status(400).json({message: "Insufficient balance"})
 
+    const user = await prisma.user.findUnique({where: {id: userId}, select: {name: true}})
+
     await prisma.$transaction(async(txn: any) => {
       await txn.$queryRaw`SELECT * FROM "Balance" WHERE "userId"=${userId} FOR UPDATE`
       await txn.balance.update({where: {userId}, data: {amount: {decrement: amount * 100}}})
@@ -47,7 +49,13 @@ p2mRouter.post('/transfer/merchant', authMiddleware, transferLimiter, async(req:
       await txn.merchantPayment.create({data: {amount: amount * 100, merchantId, userId, ...(label ? {label} : {})}})
     })
 
-    await redis.publish(channel, JSON.stringify({message: `Payment of ₹${amount} received`}))
+    await redis.publish(channel, JSON.stringify({
+      userId,
+      userName: user?.name,
+      amount: amount * 100,
+      timestamp: new Date().toISOString(),
+      via: 'QR'
+    }))
     return res.status(200).json({message: "Payment Successful to the Merchant"})
   } catch(e: any) { return res.status(400).json({message: e.message}) }
 })

@@ -19,7 +19,7 @@ export function setupWebSocket(server: http.Server) {
         }
         try{
             const decoded = jwt.verify(token, JWT_SECRET) as jwt.JwtPayload
-            ;(req as any).merchantId = decoded.merchantId
+            ;(req as any).merchantId = decoded.merchantId ?? decoded.userId
             wss.handleUpgrade(req, socket as any, head as any, (ws) => {
                 wss.emit('connection', ws, req)
             })
