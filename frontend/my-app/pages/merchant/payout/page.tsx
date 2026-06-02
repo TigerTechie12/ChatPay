@@ -80,8 +80,8 @@ export function MerchantPayout() {
     const token = localStorage.getItem("merchant_token")
     const headers = { Authorization: `Bearer ${token}` }
     Promise.all([
-      axios.get(`${API}/api/merchant/balance`, { headers }),
-      axios.get(`${API}/api/merchant/payouts`, { headers }),
+      axios.get(`${API}/api/v1/merchant/balance`, { headers }),
+      axios.get(`${API}/api/v1/merchant/payouts`, { headers }),
     ]).then(([balRes, payRes]) => {
       setLocked(balRes.data.locked ?? 0)
       setPayouts(payRes.data.payouts ?? [])
@@ -99,7 +99,7 @@ export function MerchantPayout() {
     try {
       const token = localStorage.getItem("merchant_token")
       const res = await axios.post(
-        `${API}/api/merchant/manual/withdraw`,
+        `${API}/api/v1/merchant/manual/withdraw`,
         { amount: amt, provider: form.provider, accountNumber: form.accountNumber, ifscCode: form.ifscCode.toUpperCase() },
         { headers: { Authorization: `Bearer ${token}` } }
       )

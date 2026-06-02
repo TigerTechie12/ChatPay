@@ -73,9 +73,9 @@ export function MerchantOverview() {
     const headers = { Authorization: `Bearer ${token}` }
 
     Promise.all([
-      axios.get(`${API}/api/merchant/balance`, { headers }),
-      axios.get(`${API}/api/merchant/transactions`, { headers }),
-      axios.get(`${API}/api/qr/list`, { headers }),
+      axios.get(`${API}/api/v1/merchant/balance`, { headers }),
+      axios.get(`${API}/api/v1/merchant/transactions`, { headers }),
+      axios.get(`${API}/api/v1/qr/list`, { headers }),
     ]).then(([balRes, txRes, qrRes]) => {
       setTotalBalance(balRes.data.totalBalance ?? 0)
       setLocked(balRes.data.locked ?? 0)

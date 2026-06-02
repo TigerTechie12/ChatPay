@@ -38,7 +38,8 @@ export function GenerateQR() {
     if (token) {
       try {
         const payload = JSON.parse(atob(token.split(".")[1]))
-        if (payload.merchantId) setMerchantId(payload.merchantId)
+        const mid = payload.merchantId ?? payload.userId
+        if (mid) setMerchantId(Number(mid))
         if (payload.name) setMerchantName(payload.name)
       } catch {}
     }
@@ -66,7 +67,7 @@ export function GenerateQR() {
     try {
       const token = localStorage.getItem("merchant_token")
       const res = await axios.post(
-        `${API}/api/qr/generate`,
+        `${API}/api/v1/qr/generate`,
         { amount: Number(amountPaise) || 0, label },
         { headers: { Authorization: `Bearer ${token}` } }
       )

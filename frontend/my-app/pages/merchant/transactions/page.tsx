@@ -56,7 +56,7 @@ export function MerchantTransactions() {
 
   useEffect(() => {
     const token = localStorage.getItem("merchant_token")
-    axios.get(`${API}/api/merchant/transactions`, {
+    axios.get(`${API}/api/v1/merchant/transactions`, {
       headers: { Authorization: `Bearer ${token}` },
     }).then(res => {
       setTransactions(res.data.merchantPayments ?? [])

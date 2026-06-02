@@ -37,7 +37,7 @@ export function MerchantSettings() {
     if (savedAccent && savedAccent in ACCENTS) setAccent(savedAccent)
 
     const token = localStorage.getItem("merchant_token")
-    axios.get(`${API}/api/merchant/settings`, {
+    axios.get(`${API}/api/v1/merchant/settings`, {
       headers: { Authorization: `Bearer ${token}` },
     }).then(res => {
       const m = res.data.merchant
@@ -60,7 +60,7 @@ export function MerchantSettings() {
     try {
       const token = localStorage.getItem("merchant_token")
       const res = await axios.put(
-        `${API}/api/merchant/updateBankDetails`,
+        `${API}/api/v1/merchant/updateBankDetails`,
         { ...form, bankIfscCode: form.bankIfscCode.toUpperCase() },
         { headers: { Authorization: `Bearer ${token}` } }
       )
